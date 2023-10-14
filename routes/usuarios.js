@@ -11,8 +11,13 @@ router.get('/', (req, res, next) => {
 
 //CRIA UM NOVO USUARIO NO BANCO
 router.post('/', (req, res, next) => {
+    const usuario ={
+       nome: req.body.nome,
+       email: req.body.email
+    }
     res.status(201).send({
-        mensagem: 'usando o post na rota de usuarios'
+        mensagem: 'usando o post na rota de usuarios',
+        userCriado: usuario
     });
 });
 
