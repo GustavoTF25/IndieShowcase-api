@@ -33,6 +33,7 @@ router.get('/:usu_id', (req, res, next) => {
     });
 });
 
+
 router.post('/cadastro', (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})}
@@ -65,6 +66,7 @@ router.post('/cadastro', (req, res, next) => {
     });
 });
 
+
 router.post('/login', (req, res, next) =>{
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}
@@ -81,7 +83,7 @@ router.post('/login', (req, res, next) =>{
             }
             if(result){
                 let token = jwt.sign({
-                    id_usuario: results[0].id_usuario,
+                    usu_id: results[0].usu_id,
                     email: results[0].email 
                 }, 'process.env.JWT_KEY', {
                     expiresIn: "1h"
@@ -96,5 +98,40 @@ router.post('/login', (req, res, next) =>{
         });
     });
 });
+
+
+router.patch('/editar', (req, res, next) => {
+    mysql.getConnection((error,conn) =>{
+        if(error) {return res.status(500).send({error: error})}
+        conn.query(`UPDATE usu_usuario SET usu_nome = ? WHERE usu_id =?`,
+        [req.body.nome, req.body.usu_id],
+        (error, resultado, fields) => {
+            conn.release();
+            if(error) { return res.status(500).send({error: error})}
+            res.status(202).send({
+                mensagem: 'Info editada com sucesso'
+        });
+       }
+      )
+   });
+ });
+
+router.delete('/deletar', (req, res, next) =>{
+    mysql.getConnection((error,conn) =>{
+        if(error) {return res.status(500).send({error: error})}
+        conn.query(`DELETE FROM usu_usuario WHERE usu_id = ?`,
+        [req.body.usu_id],
+        (error, resultado, fields) => {
+            conn.release();
+            if(error) { return res.status(500).send({error: error})}
+            res.status(202).send({
+                mensagem: 'Usuário deletado'
+        });
+       }
+      )
+   }); 
+
+});
+
 
 module.exports = router;
