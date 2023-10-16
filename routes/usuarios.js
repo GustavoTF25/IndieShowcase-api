@@ -8,8 +8,27 @@ const jwt = require('jsonwebtoken');
 router.get('/', (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
-        conn.query('SELECT * FROM usu_usuarios');
-        return res;
+        conn.query(
+        'SELECT * FROM usu_usuario',
+        (error, resultado, fields) => {
+            if(error) { return res.status(500).send({error: error})}
+            return res.status(200).send({response: resultado});
+        }
+      );
+    });
+  
+});
+
+router.get('/:id', (req, res, next) => {
+    mysql.getConnection((error, conn) => { 
+        if(error) {return res.status(500).send({error:error})};
+        conn.query(
+        'SELECT * FROM usu_usuario',
+        (error, resultado, fields) => {
+            if(error) { return res.status(500).send({error: error})}
+            return res.status(200).send({response: resultado});
+        }
+      );
     });
   
 });
