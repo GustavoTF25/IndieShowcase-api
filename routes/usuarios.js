@@ -19,18 +19,18 @@ router.get('/', (req, res, next) => {
   
 });
 
-router.get('/:id', (req, res, next) => {
+router.get('/:usu_id', (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
         conn.query(
-        'SELECT * FROM usu_usuario',
+        'SELECT * FROM usu_usuario WHERE usu_id = ?',
+        [req.params.usu_id],
         (error, resultado, fields) => {
             if(error) { return res.status(500).send({error: error})}
             return res.status(200).send({response: resultado});
         }
       );
     });
-  
 });
 
 router.post('/cadastro', (req, res, next) => {
