@@ -27,7 +27,7 @@ router.post('/', (req, res, next) => {
        descricao: req.body.descricao
     }
     res.status(201).send({
-        mensagem: 'usando o post na rota de usuarios',
+        mensagem: 'usando o post na rota de postagem',
         postagemCriado: postagem
     });
 });
