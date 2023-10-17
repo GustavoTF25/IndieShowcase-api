@@ -20,20 +20,6 @@ router.get('/', (req, res, next) => {
     });
 });
 
-//get de postagens especificas
-router.get('/:usu_id', (req, res, next) => {
-    mysql.getConnection((error, conn) => { 
-        if(error) {return res.status(500).send({error:error})};
-        conn.query(
-        'SELECT * FROM pos_postagens WHERE pos_id = ?',
-        [req.params.usu_id],
-        (error, resultado, fields) => {
-            if(error) { return res.status(500).send({error: error})}
-            return res.status(200).send({response: resultado});
-        }
-      );
-    });
-});
 
 //Insercao de postagem
  //codigo baseado no de usuarios
