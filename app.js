@@ -4,6 +4,7 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const rotaUsuarios = require('./routes/usuarios');
 const rotaPostagens = require('./routes/postagens');
+const rotaCategorias = require('./routes/categorias');
 
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: false})); // apenas dados simples
@@ -20,6 +21,7 @@ app.use((req, res, next) => {
 
 app.use('/usuarios', rotaUsuarios);
 app.use('/postagens', rotaPostagens);
+app.use('/categorias', rotaCategorias);
 
 //rota não encontrada
 app.use((req, res, next) => {
