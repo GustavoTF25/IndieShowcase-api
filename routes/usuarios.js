@@ -82,12 +82,15 @@ router.post('/login', (req, res, next) =>{
                 return res.status(401).send({mensagem: 'falha na autenticação'});
             }
             if(result){
+                
                 let token = jwt.sign({
                     usu_id: results[0].usu_id,
-                    email: results[0].email 
+                    email: results[0].email, 
                 }, 'process.env.JWT_KEY', {
-                    expiresIn: "1h"
+                    algorithm:'HS512',
+                    expiresIn: "2h"
                 });
+                
                 return res.status(200).send({mensagem: 'Autenticado com sucesso',
                 token: token
             });
