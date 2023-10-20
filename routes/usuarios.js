@@ -87,7 +87,7 @@ router.post('/login', (req, res, next) =>{
                 let token = jwt.sign({
                     usu_id: results[0].usu_id,
                     email: results[0].email, 
-                }, 'process.env.JWT_KEY', {
+                }, process.env.JWT_KEY, {
                     algorithm:'HS512',
                     expiresIn: "2h"
                 });

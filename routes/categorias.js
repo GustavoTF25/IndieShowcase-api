@@ -24,26 +24,6 @@ router.post('/', (req, res, next) => {
     });
 });
 
-// router.post('/adicionar', (req, res, next) => {
-//     mysql.getConnection((error, conn) => {
-//         if(error) {return res.status(500).send({error:error})}
-// if(error){return res.status(500).send({error: mysql})}
-// conn.query('INSERT INTO cat_categoria ( cat_nome) VALUES (?)', 
-//                 [req.body.nome], (error,results) => {
-//                     conn.release();
-//                     if(error) {return res.status(500).send({error:error})}
-//                     response = {
-//                         mensagem: "Categoria adicionada.",
-//                         categoriaCriado: {
-//                             cat_id: results.insertId,
-//                             nome: req.body.nome
-//                         }
-//                     }
-//                     return res.status(201).send(response);
-//                 });
-                
-//             });
-//         });
 router.post('/adicionar', (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})}
