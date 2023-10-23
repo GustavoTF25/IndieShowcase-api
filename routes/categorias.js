@@ -2,26 +2,19 @@ const express = require('express');
 const router = express.Router();
 const mysql= require('../mysql').pool;
 require('dotenv').config();
- 
 
- router.get('/', (req, res, next) => {
+router.get('/', (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
-        conn.query('SELECT * FROM cat_categorias');
-        return res;
+        conn.query(
+        'SELECT * FROM cat_categoria',
+        (error, resultado, fields) => {
+            if(error) { return res.status(500).send({error: error})}
+            return res.status(200).send({response: resultado});
+        }
+      );
     });
   
-});
-
-router.post('/', (req, res, next) => {
-    const categoria= {
-       cat_id: req.body.cat_id,
-       nome: req.body.nome,
-       }
-    res.status(201).send({
-        mensagem: 'usando o post na rota de categorias',
-        categoriaCriado:categoria
-    });
 });
 
 router.post('/adicionar', (req, res, next) => {

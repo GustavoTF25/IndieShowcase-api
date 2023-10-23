@@ -2,6 +2,7 @@ const express = require('express');
 const app = express()
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const rotaUsuarios = require('./routes/usuarios');
 const rotaPostagens = require('./routes/postagens');
 const rotaCategorias = require('./routes/categorias');
@@ -10,15 +11,7 @@ app.use(morgan('dev'));
 app.use('/postagens/uploads' ,express.static('uploads'))
 app.use(bodyParser.urlencoded({extended: false})); // apenas dados simples
 app.use(bodyParser.json());
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Header', 'Origin, X-Requested-With', 'Content-Type', 'Accept', 'Authorization');
-    if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, GET');
-        return res.status(200).send({});
-    }
-    next();
-});
+app.use(cors());
 
 app.use('/usuarios', rotaUsuarios);
 app.use('/postagens', rotaPostagens);

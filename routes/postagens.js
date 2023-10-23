@@ -58,7 +58,7 @@ router.post('/publicar', authlogin.opcional, upload.single('arquivo'), (req, res
                             tags: req.body.pos_tags,  
                             usu_id: req.user.usu_id, 
                             cat_id: req.body.cat_id,
-                            arquivo: req.file.path    
+                            arquivo : req.file.path    
                             
                         }
                     }
