@@ -1,6 +1,8 @@
 const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const transporter = require('../config/mailer');
+
 
 exports.getusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
@@ -70,11 +72,11 @@ exports.loginusuarios = (req, res, next) => {
             conn.release();
             if(error) {return res.status(500).send({error: error})};
             if(results.length < 1) {
-                return res.status(401).send({mensagem: 'falha na autenticação'});
+                return res.status(401).send({mensagem: 'Usuário ou email não encontrado'});
             };
            bcrypt.compare(req.body.senha, results[0].usu_senha, (err, result) => {
             if(err){
-                return res.status(401).send({mensagem: 'falha na autenticação'});
+                return res.status(401).send({mensagem: 'Senha Incorreta'});
             }
             if(result){
                 
@@ -91,7 +93,7 @@ exports.loginusuarios = (req, res, next) => {
                 token: token
             });
             }
-            return res.status(401).send({mensagem : 'falha na autenticação'})
+            return res.status(401).send({mensagem : 'Email ou Senha Incorreta'})
 
            });
         });
@@ -130,3 +132,74 @@ exports.patchusuarios = (req, res, next) => {
    }); 
 
 };
+
+exports.esquecisenha = async (req, res, results) => {
+    const {email} = req.body;
+    mysql.getConnection((error,conn) =>{
+        if(error) {return res.status(500).send({error: error})}
+        const query = `SELECT * FROM usu_usuario WHERE usu_email = ?`;
+        conn.query(query, [req.body.email], (error, results, fields) =>{
+            conn.release();
+            if(error) {return res.status(500).send({error: error})};
+            if(results.length < 1) {
+                return res.status(401).send({mensagem: 'Usuário ou email não encontrado'});
+            };
+            
+    let resetToken = jwt.sign( {email}, process.env.JWT_KEY, {expiresIn: '1h'});
+    //console.log(resetToken);
+    const resetLink = `http://localhost:8000/esqueci-senha?token=${resetToken}`;
+    const mailOptions = {
+    from: 'gustavotet2022@outlook.com.br',
+    to: email,
+    subject: 'Recuperação de Senha',
+    html: `Clique <a href="${resetLink}">aqui</a> para redefinir sua senha.`,
+  };
+
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      console.error('Erro ao enviar e-mail de recuperação de senha:', error);
+      return res.status(500).json({ error: 'Erro ao enviar e-mail de recuperação de senha' });
+    } else {
+      console.log('E-mail de recuperação de senha enviado com sucesso:', info.response);
+      return res.status(200).json({ message: 'E-mail de recuperação de senha enviado com sucesso' });
+    }
+  });
+
+});
+
+});
+
+};
+
+exports.verificasenha = async (req, res) => {
+    const token = req.query.token; // Obtenha o token da consulta
+
+    // Verifique a validade do token
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+      }
+  
+      // O token é válido, permita ao usuário redefinir a senha
+      res.render('reset-password-form', { token });
+    });
+};
+
+exports.novasenha = async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    // Verifique a validade do token novamente (opcional, mas recomendado)
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+      }
+  
+      // O token é válido, permita ao usuário redefinir a senha
+      // Valide a nova senha e atualize-a no banco de dados
+  
+      // Após a redefinição bem-sucedida da senha, responda com uma confirmação
+      res.status(200).json({ message: 'Senha redefinida com sucesso' });
+    });
+};
+  

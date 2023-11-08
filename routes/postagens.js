@@ -23,7 +23,7 @@ const upload = multer({storage: storage, limits: { fileSize: 1024 * 1024 * 1024 
 const authlogin = require('../middleware/authlogin');
 const postController = require('../controllers/postController')
 
-
+//Rotas 
 router.get('/', postController.getposts);
 router.post('/publicar', authlogin.opcional, upload.single('arquivo'), postController.postpostagem);
 

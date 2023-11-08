@@ -4,6 +4,7 @@ const mysql= require('../mysql').pool;
 require('dotenv').config();
 const categoriaController = require('../controllers/categoriaController');
 
+//Rotas
 router.get('/', categoriaController.getcategorias);
 router.post('/adicionar', categoriaController.postcategorias);
 
