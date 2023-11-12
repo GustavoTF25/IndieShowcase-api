@@ -65,6 +65,7 @@ exports.postusuarios = (req, res, next) => {
     });
 };
 
+
 exports.fotousuario = (req,res,next) =>{
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error:error, response: 'Foto não deve ser vazia' })}
