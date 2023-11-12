@@ -2,6 +2,7 @@ const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const transporter = require('../config/mailer');
+const fs = require('fs');   
 
 
 exports.getusuarios = (req, res, next) => {
@@ -61,6 +62,34 @@ exports.postusuarios = (req, res, next) => {
             }
         })
     
+    });
+};
+
+exports.fotousuario = (req,res,next) =>{
+    mysql.getConnection((error,conn) =>{
+        if(error) {return res.status(500).send({error:error, response: 'Foto não deve ser vazia' })}
+        let foto = req.files;
+        console.log(foto);
+        if(!/^îmage/.test(foto.mimetype))return res.sendStatus(400);
+        let usuarioId = userId;
+        if(foto){
+            imagemCaminho = `usuarios/fotos/${usuarioId}/` + new Date().toISOString().replace(/:/g,'-')+'-'+foto.name;
+            if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
+            foto.mv(imagemCaminho);  
+        }else{
+            imagemCaminho = 'usuarios/fotos/foto.png' ; 
+        }
+        conn.query('UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}',
+        [imagemCaminho],(error,results) => { 
+            conn.release();
+            return res.status(201).send({
+                mensagem: "Foto inserida!",
+                usuariocriado: {
+                    foto:  imagemCaminho
+                    }
+                });
+            if(error){return res.status(500).send({error: error, response: 'erro ao inserir foto'});}
+        });
     });
 };
 
@@ -173,18 +202,22 @@ exports.esquecisenha = async (req, res, results) => {
 };
 
 exports.verificasenha = async (req, res) => {
-    const token = req.query.token; // Obtenha o token da consulta
+    const token = req.query.token;
 
-    // Verifique a validade do token
+    console.log('Token recebido:', token);
+
     jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
       if (err) {
+        console.error('Erro ao verificar o token:', err);
         return res.status(401).json({ error: 'Token inválido ou expirado' });
       }
-  
-      // O token é válido, permita ao usuário redefinir a senha
+
+      console.log('Token decodificado:', decoded.email);
+
       res.render('reset-password-form', { token });
     });
 };
+
 
 exports.novasenha = async (req, res) => {
     const { token, newPassword } = req.body;

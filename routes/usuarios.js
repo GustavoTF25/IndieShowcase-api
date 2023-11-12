@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userController = require('../controllers/userController');
 const authlogin = require('../middleware/authlogin');
+const fileUpload = require('express-fileupload');
+
 
 
 
@@ -18,5 +20,7 @@ router.delete('/deletar', userController.deleteusuarios);
 router.post('/esqueci-senha', userController.esquecisenha);
 router.get('/verifica-senha', authlogin.opcional, userController.verificasenha);
 router.post('/nova-senha', userController.novasenha);
+router.post('/adicionar-foto', userController.fotousuario);
+
 
 module.exports = router;

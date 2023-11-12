@@ -7,6 +7,7 @@ exports.opcional = (req, res, next) => {
         const decoded = jwt.verify(token, segredo, { algorithms: ['HS512'] });
         req.user = {
             usu_id: decoded.usu_id
+            //email: decoded.usu_email
         };
         next();
     } catch (error) {
