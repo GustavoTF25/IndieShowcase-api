@@ -8,7 +8,7 @@ exports.opcional = (req, res, next) => {
         req.user = {
             usu_id: decoded.usu_id
             //email: decoded.usu_email
-        };
+        }
         next();
     } catch (error) {
     console.log(error)

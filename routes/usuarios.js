@@ -18,9 +18,9 @@ router.post('/login', userController.loginusuarios);
 router.patch('/editar', userController.patchusuarios);
 router.delete('/deletar', userController.deleteusuarios);
 router.post('/esqueci-senha', userController.esquecisenha);
-router.get('/verifica-senha', authlogin.opcional, userController.verificasenha);
+router.post('/verifica-senha', authlogin.opcional, userController.verificasenha);
 router.post('/nova-senha', userController.novasenha);
-router.post('/adicionar-foto', userController.fotousuario);
+router.post('/adicionar-nova-foto', authlogin.opcional, userController.fotousuario);
 
 
 module.exports = router;

@@ -2,7 +2,9 @@ const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const transporter = require('../config/mailer');
-const fs = require('fs');   
+const fs = require('fs');  
+const mime = require('mime-types');
+
 
 
 exports.getusuarios = (req, res, next) => {
@@ -34,65 +36,87 @@ exports.getusuid = (req, res, next) => {
 
 exports.postusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => {
-        if(error) {return res.status(500).send({error:error})}
-        //Se já houver email cadastrado
-        conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
-            if(error){return res.status(500).send({error: error})}
-            if(results.length > 0) {
-                res.status(409).send({mensagem: 'usuario já cadastrado!'});
-            }else{
-                bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                    if(error){return res.status(500).send({error: errBcrypt})}
-                    conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha) VALUES (?,?,?)', 
-                    [req.body.nome, req.body.email, hash], 
-                    (error,results) => {
-                        conn.release();
-                        if(error) {return res.status(500).send({error:error})}
-                        response = {
-                            mensagem: "Usuário cadastrado!",
-                            usuariocriado: {
-                                usu_id : results.insertId,
-                                nome: req.body.nome,
-                                email: req.body.email
-                            }
-                        }
-                        return res.status(201).send(response);
-                    });
-                });
-            }
-        })
-    
-    });
-};
+      if(error) {return res.status(500).send({error:error})}
+          //Se já houver email cadastrado
+      conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
+          if(error){return res.status(500).send({error: error})}
+          if(results.length > 0) {
+              res.status(409).send({mensagem: 'usuario já cadastrado!'});
+                  }else{
+                      bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
+                      try{
+                          if(error){return res.status(500).send({error: errBcrypt})}
+                          let imagemCaminho = 'usuarios/fotos/foto.png'
+                          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
+                          [req.body.nome, req.body.email, hash, imagemCaminho],   
+                          (error,results) => {
+                          conn.release();
+                              
+                          let userId = results.insertId;
+                          //console.log(userId);
+                          
+                          let diretorio = `usuarios/fotos/${userId}/`;
+                          if(!fs.existsSync(diretorio)){fs.mkdirSync(diretorio), {recursive: true} };
+  
+                              return res.status(201).send({
+                              mensagem: "Usuário cadastrado!",
+                              usuariocriado: {
+                                  usu_id : results.insertId,
+                                  nome: req.body.nome,
+                                  email: req.body.email,
+                                  foto:  imagemCaminho,
+                                  diretorio: diretorio
+                                  }
+                              });
+                          }
+                      )
+                      } 
+                      catch{
+                          return res.status(409).send({mensagem:'erro na conexao do cadastro' });
+                      }
+                  }) 
+              } 
+          }) 
+      }); 
+     
+  };
 
 
-exports.fotousuario = (req,res,next) =>{
-    mysql.getConnection((error,conn) =>{
-        if(error) {return res.status(500).send({error:error, response: 'Foto não deve ser vazia' })}
-        let foto = req.files;
-        console.log(foto);
-        if(!/^îmage/.test(foto.mimetype))return res.sendStatus(400);
-        let usuarioId = userId;
-        if(foto){
-            imagemCaminho = `usuarios/fotos/${usuarioId}/` + new Date().toISOString().replace(/:/g,'-')+'-'+foto.name;
-            if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
-            foto.mv(imagemCaminho);  
-        }else{
-            imagemCaminho = 'usuarios/fotos/foto.png' ; 
-        }
-        conn.query('UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}',
-        [imagemCaminho],(error,results) => { 
-            conn.release();
-            return res.status(201).send({
-                mensagem: "Foto inserida!",
-                usuariocriado: {
-                    foto:  imagemCaminho
-                    }
-                });
-            if(error){return res.status(500).send({error: error, response: 'erro ao inserir foto'});}
-        });
-    });
-};
+  exports.fotousuario = (req, res, next) =>
+  {
+      mysql.getConnection((error,conn) => {
+      let usuarioId = req.user.usu_id;
+      let {foto} = req.files;
+      if(!isImagem(foto)){return res.status(400).send({mensagem: "Arquivo nao suportado"})}  
+     
+      if(foto){
+          imagemCaminho = `usuarios/fotos/${usuarioId}/` /* + new Date().toISOString().replace(/:/g,'-')+'-' */ +foto.name;
+          if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
+          fs.readdirSync(`usuarios/fotos/${usuarioId}`).forEach(f => fs.rmSync(`usuarios/fotos/${usuarioId}/${f}`));
+          foto.mv(imagemCaminho);  
+      }else{
+          imagemCaminho = 'usuarios/fotos/foto.png' ; 
+      }
+  
+      conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
+      [imagemCaminho],(error,results) => { 
+          conn.release();
+          return res.status(201).send({
+              mensagem: "Foto alterada com sucesso!",
+              usuariocriado: {
+                  usu_id: usuarioId,
+                  foto:  imagemCaminho
+                  }
+              });
+          });
+      });
+  }
+  function isImagem(file){
+      let extensao = file.name.split('.').pop();
+      let mimeType = mime.lookup(extensao)
+      return mimeType && mimeType.startsWith('image');
+  }
+
 
 exports.loginusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
