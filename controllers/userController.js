@@ -1,9 +1,12 @@
 const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const fileUpload = require('express-fileupload');
 const transporter = require('../config/mailer');
+const fs = require('fs');
+const mime = require('mime-types');
 
-
+//sconst express = require('express');
 exports.getusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
@@ -32,38 +35,84 @@ exports.getusuid = (req, res, next) => {
 };
 
 exports.postusuarios = (req, res, next) => {
-    mysql.getConnection((error, conn) => {
-        if(error) {return res.status(500).send({error:error})}
+ 
+  mysql.getConnection((error, conn) => {
+    if(error) {return res.status(500).send({error:error})}
         //Se já houver email cadastrado
-        conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
-            if(error){return res.status(500).send({error: error})}
-            if(results.length > 0) {
-                res.status(409).send({mensagem: 'usuario já cadastrado!'});
-            }else{
-                bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                    if(error){return res.status(500).send({error: errBcrypt})}
-                    conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha) VALUES (?,?,?)', 
-                    [req.body.nome, req.body.email, hash], 
-                    (error,results) => {
+    conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
+        if(error){return res.status(500).send({error: error})}
+        if(results.length > 0) {
+            res.status(409).send({mensagem: 'usuario já cadastrado!'});
+                }else{
+                    bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
+                    try{
+                        if(error){return res.status(500).send({error: errBcrypt})}
+                        let imagemCaminho = 'usuarios/fotos/foto.png'
+                        conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
+                        [req.body.nome, req.body.email, hash, imagemCaminho],   
+                        (error,results) => {
                         conn.release();
-                        if(error) {return res.status(500).send({error:error})}
-                        response = {
+                        let userId = results.insertId;
+                        let diretorio = `usuarios/fotos/${userId}/`;
+                        if(!fs.existsSync(diretorio)){fs.mkdirSync(diretorio)/*, {recursive: true} */};
+
+                            return res.status(201).send({
                             mensagem: "Usuário cadastrado!",
                             usuariocriado: {
                                 usu_id : results.insertId,
                                 nome: req.body.nome,
-                                email: req.body.email
-                            }
-                        }
-                        return res.status(201).send(response);
-                    });
-                });
-            }
-        })
-    
-    });
+                                email: req.body.email,
+                                foto:  imagemCaminho,
+                                diretorio: diretorio
+                                }
+                            });//results
+                        }//insert
+                    )//conn query
+                    } //do try
+                    catch{
+                        return res.status(409).send({mensagem:'erro na conexao do cadastro' });
+                    }
+                }) //bcrypt hash
+            } 
+        }) // conn query
+    }); // mysql connect
+   
 };
 
+exports.fotousuario = (req, res, next) =>
+{
+    mysql.getConnection((error,conn) => {
+    let usuarioId = req.user.usu_id; 
+    let {foto} = req.files;
+    if(!isImagem(foto)){return res.status(400).send({mensagem: "Arquivo nao suportado"})}  
+   
+    if(foto){
+        imagemCaminho = `usuarios/fotos/${usuarioId}/` /* + new Date().toISOString().replace(/:/g,'-')+'-' */ +foto.name;
+        if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
+        fs.readdirSync(`usuarios/fotos/${usuarioId}`).forEach(f => fs.rmSync(`usuarios/fotos/${usuarioId}/${f}`));
+        foto.mv(imagemCaminho);  
+    }else{
+        imagemCaminho = 'usuarios/fotos/foto.png' ; 
+    }
+    console.log(foto)
+    conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
+    [imagemCaminho],(error,results) => { 
+        conn.release();
+        return res.status(201).send({
+            mensagem: "Foto alterada com sucesso!",
+            usuariocriado: {
+                usu_id: usuarioId,
+                foto:  imagemCaminho
+                }
+            });
+        });
+    });
+}
+function isImagem(file){
+    let extensao = file.name.split('.').pop();
+    let mimeType = mime.lookup(extensao)
+    return mimeType && mimeType.startsWith('image');
+}
 exports.loginusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}
@@ -173,18 +222,22 @@ exports.esquecisenha = async (req, res, results) => {
 };
 
 exports.verificasenha = async (req, res) => {
-    const token = req.query.token; // Obtenha o token da consulta
+    const token = req.query.token;
 
-    // Verifique a validade do token
+    console.log('Token recebido:', token);
+
     jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
       if (err) {
+        console.error('Erro ao verificar o token:', err);
         return res.status(401).json({ error: 'Token inválido ou expirado' });
       }
-  
-      // O token é válido, permita ao usuário redefinir a senha
+
+      console.log('Token decodificado:', decoded.email);
+
       res.render('reset-password-form', { token });
     });
 };
+
 
 exports.novasenha = async (req, res) => {
     const { token, newPassword } = req.body;
