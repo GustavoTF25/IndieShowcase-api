@@ -35,7 +35,7 @@ exports.postpostagem = (req, res, next)  =>
          if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
         const usuarioId = req.user.usu_id;
         const {arquivo} = req.files;
-        console.log(req.body)
+        //console.log(req.body)
        
         let caminhoArquivo = 'postagens/' + arquivo.name;
         conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)', 

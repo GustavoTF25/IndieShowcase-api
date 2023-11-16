@@ -94,7 +94,7 @@ exports.fotousuario = (req, res, next) =>
     }else{
         imagemCaminho = 'usuarios/fotos/foto.png' ; 
     }
-    console.log(foto)
+    //console.log(foto)
     conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
     [imagemCaminho],(error,results) => { 
         conn.release();
@@ -174,7 +174,7 @@ exports.patchusuarios = (req, res, next) => {
             conn.release();
             if(error) { return res.status(500).send({error: error})}
             res.status(202).send({
-                mensagem: 'Usuário deletado'
+                mensagem: 'Usuário removido'
         });
        }
       )

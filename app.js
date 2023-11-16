@@ -46,6 +46,7 @@ app.use((error, req, res, next) => {
     })
 });
 
+
 app.use('/teste', (req, res, next) => {
 res.status(200).send({mensagem: 'tudo funcionando'});
 });
