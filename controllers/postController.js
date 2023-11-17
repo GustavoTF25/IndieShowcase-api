@@ -1,6 +1,7 @@
 const mysql = require('../mysql').pool;
 const fs = require('fs');
- 
+const mime = require('mime-types');
+//const { MIMEType } = require('util');//
 
 exports.getposts = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
@@ -28,42 +29,57 @@ exports.getpoststitulo = (req, res, next) => {
 });
 }
 
+
 exports.postpostagem = (req, res, next)  => 
 {   mysql.getConnection((error, conn) => 
     {  
-         if(error) {return res.status(401).send({error:error, mensagem:"Sessão expirada"})}
-         if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
+        if(error) {return res.status(401).send({error:error, mensagem:"Sessão expirada"})}
+        if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
         const usuarioId = req.user.usu_id;
-        const {arquivo} = req.files;
-        //console.log(req.body)
-       
-        let caminhoArquivo = 'postagens/' + arquivo.name;
+        //const {arquivo} = req.files;
+        //const {arquivo2} = req.files;
+        //const {arquivo3} = req.files;
+        //const {arquivo4} = req.files;
+        //const {arquivo5} = req.files;
+        //let arquivos = [arquivo, arquivo2, arquivo3, arquivo4, arquivo5];
+        const arquivos = req.files;
+        const { titulo, descricao, tags, cat_id } = req.body;
+        //let caminhoArquivo = 'postagens/' + arquivo.name;
         conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)', 
         [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id], 
         (error,results) => {
             conn.release();    
             const postagemId = results.insertId;
-            if(arquivo){
-            caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
-            if(!fs.existsSync(`postagens/${postagemId}/`)){fs.mkdirSync(`postagens/${postagemId}`)}
-            arquivo.mv(caminhoArquivo);
-            conn.query(`UPDATE pos_postagem SET pos_arquivo = (?) WHERE pos_id = ${postagemId}`,
-            [caminhoArquivo], (error,results)=> {if(error){return res.status(500)}})
-            }
-            if(error) {return res.status(500).send({error:error, message:"falha no envio do arquivo"})}
-            response = {
+            const inserirArquivo = (arquivo) => {
+                if (arquivo) {
+                    const caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
+                    if (!fs.existsSync(`postagens/${postagemId}/`)) {fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });}
+                    
+                    arquivo.mv(caminhoArquivo, (err) => {
+                        if (err) {return res.status(500).send({ error: err, message: "Falha no envio do arquivo" });}
+                        conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
+                        [arquivo.name, arquivo.mimetype, postagemId],
+                        (error) => {if (error) {return res.status(500).send({ error: error, message: "Falha ao inserir no banco" });}}
+                        );
+                    });
+                }
+            };
+
+            // Percorre o array de arquivos e insere um a um
+            Object.values(arquivos).forEach(inserirArquivo);
+
+            const response = {
                 mensagem: "Postagem criada!",
                 postagemcriada: {
-                    pos_id : results.insertId,
-                    titulo: req.body.titulo,
-                    descricao: req.body.descricao,
-                    tags: req.body.pos_tags,  
-                    usu_id: req.user.usu_id, 
-                    cat_id: req.body.cat_id,
-                    arquivo: caminhoArquivo  
-                    
-                }
-            }
+                    pos_id: postagemId,
+                    titulo: titulo,
+                    descricao: descricao,
+                    tags: tags,
+                    usu_id: usuarioId,
+                    cat_id: cat_id,
+                    arquivos: Object.values(arquivos).map((arquivo) => arquivo.name),
+                },
+            };
             return res.status(201).send(response);
         });              
     });
