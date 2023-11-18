@@ -1,29 +1,26 @@
 const express = require('express');
 const app = express()
 const morgan = require('morgan');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const rotaUsuarios = require('./routes/usuarios');
 const rotaPostagens = require('./routes/postagens');
 const rotaCategorias = require('./routes/categorias');
 const fileUpload = require('express-fileupload');
- 
+
 
 app.use(morgan('dev'));
-app.use('/postagens/uploads' ,express.static('uploads'))
-app.use('/usuarios/fotos/:usu_id' ,express.static('fotos'))
-app.use(bodyParser.urlencoded({extended: false})); // apenas dados simples
-app.use(bodyParser.json());
+app.use('/postagens/uploads', express.static('uploads'))
+app.use(express.json());
 app.use(cors());
- 
 app.use(
     fileUpload({
-        limits: { fileSize: 24 * 1024 * 1024 /* mais ou memnos 50MB */},
+        limits: {
+            fileSize: 10000000, // Around 10MB
+        },
         abortOnLimit: true,
     })
 );
 
- 
 app.use('/usuarios', rotaUsuarios);
 app.use('/postagens', rotaPostagens);
 app.use('/categorias', rotaCategorias);

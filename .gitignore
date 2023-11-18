@@ -1,4 +1,6 @@
 node_modules/
 .env
-postagens/
-usuarios/
+uploads/*
+usuarios/*
+fotos/*
+postagens/*
