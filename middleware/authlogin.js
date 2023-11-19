@@ -4,10 +4,10 @@ const segredo = process.env.JWT_KEY;
 exports.opcional = (req, res, next) => {
     try{
         const token = req.headers.authorization.split(' ')[1];
-        const decoded = jwt.verify(token, segredo, { algorithms: ['HS512'] });
+        const decoded = jwt.verify(token, segredo, { algorithms: ['HS512', 'HS256'] })
         req.user = {
-            usu_id: decoded.usu_id
-            //email: decoded.usu_email
+            usu_id: decoded.usu_id,
+            email: decoded.usu_email
         }
         next();
     } catch (error) {

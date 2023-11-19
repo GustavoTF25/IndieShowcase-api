@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authlogin = require('../middleware/authlogin');
 const postController = require('../controllers/postController')
+
 //Rotas 
 router.get('/', postController.getallposts);
 router.get ('/procurar/:titulo', postController.getpoststitulo);

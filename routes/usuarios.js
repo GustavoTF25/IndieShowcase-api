@@ -19,7 +19,7 @@ router.patch('/editar', userController.patchusuarios);
 router.delete('/deletar', userController.deleteusuarios);
 router.post('/esqueci-senha', userController.esquecisenha);
 router.post('/verifica-senha', authlogin.opcional, userController.verificasenha);
-router.post('/nova-senha', userController.novasenha);
+router.post('/nova-senha', authlogin.opcional, userController.novasenha);
 router.post('/adicionar-nova-foto', authlogin.opcional, userController.fotousuario);
 
 

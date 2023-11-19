@@ -47,40 +47,52 @@ exports.getpostsid = (req, res) => {
 });
 }
 
-exports.postpostagem = (req, res, next)  => 
-{   mysql.getConnection((error, conn) => 
+exports.postpostagem = (req, res, next)  => {
+    mysql.getConnection((error, conn) => 
     {  
-        if(error) {return res.status(501).send({error:error, mensagem:"Conexão com banco falhou"})}
-        let usuarioId = req.user.usu_id;
-        let {arquivo} = req.files;
-        conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id, pos_arquivo) VALUES (?,?,?,?,?,?)', 
-        [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id, req.files.path], 
+        if(error) {return res.status(401).send({error:error, mensagem:"Sessao expirada"})}
+        if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
+        const usuarioId = req.user.usu_id;
+        const arquivos = req.files;
+        const { titulo, descricao, tags, cat_id } = req.body;
+        //let caminhoArquivo = 'postagens/' + arquivo.name;
+        conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)', 
+        [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id], 
         (error,results) => {
-            conn.release();
-            let postagemId = results.insertId;
-            if(arquivo){
-            let caminhoArquivo = `postagens/${postagemId}/  ` + arquivo.name;
-            if(!fs.existsSync(`postagens/${postagemId}/`)){fs.mkdirSync(`postagens/${postagemId}`)}
-            arquivo.mv(caminhoArquivo);
-            }
-            if(error) {return res.status(503).send({error:error, message:"terceiro erro"})}
-            response = {
+            conn.release();    
+            const postagemId = results.insertId;
+            const inserirArquivo = (arquivo) => {
+                if (arquivo) {
+                    const caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
+                    if (!fs.existsSync(`postagens/${postagemId}/`)) {fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });}
+                    
+                    arquivo.mv(caminhoArquivo, (err) => {
+                        if (err) {return res.status(500).send({ error: err, message: "Falha no envio do arquivo" });}
+                        conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
+                        [arquivo.name, arquivo.mimetype, postagemId],
+                        (error) => {if (error) {return res.status(500).send({ error: error, message: "Falha ao inserir no banco" });}}
+                        );
+                    });
+                }
+            };
+            Object.values(arquivos).forEach(inserirArquivo);
+
+            const response = {
                 mensagem: "Postagem criada!",
                 postagemcriada: {
-                    pos_id : results.insertId,
-                    titulo: req.body.titulo,
-                    descricao: req.body.descricao,
-                    tags: req.body.pos_tags,  
-                    usu_id: req.user.usu_id, 
-                    cat_id: req.body.cat_id,
-                    arquivo: req.files.path   
-                    
-                }
-            }
+                    pos_id: postagemId,
+                    titulo: titulo,
+                    descricao: descricao,
+                    tags: tags,
+                    usu_id: usuarioId,
+                    cat_id: cat_id,
+                    arquivos: Object.values(arquivos).map((arquivo) => arquivo.name),
+                },
+            };
             return res.status(201).send(response);
         });              
     });
-}
+ }
 
    exports.getComentarios = (req, res) => {
             mysql.getConnection((error, conn) => {
