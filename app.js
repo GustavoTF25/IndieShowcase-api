@@ -21,6 +21,7 @@ app.use(
     })
 );
 
+
 app.use('/usuarios', rotaUsuarios);
 app.use('/postagens', rotaPostagens);
 app.use('/categorias', rotaCategorias);

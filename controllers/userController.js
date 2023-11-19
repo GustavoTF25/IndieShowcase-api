@@ -46,7 +46,7 @@ exports.postusuarios = (req, res, next) => {
                       bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
                       try{
                           if(error){return res.status(500).send({error: errBcrypt})}
-                          let imagemCaminho = 'usuarios/fotos/foto.png'
+                          let imagemCaminho = 'usuarios/fotos/foto.jpeg'
                           conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
                           [req.body.nome, req.body.email, hash, imagemCaminho],   
                           (error,results) => {
@@ -56,7 +56,7 @@ exports.postusuarios = (req, res, next) => {
                           //console.log(userId);
                           
                           let diretorio = `usuarios/fotos/${userId}/`;
-                          if(!fs.existsSync(diretorio)){fs.mkdirSync(diretorio), {recursive: true} };
+                          if (!fs.existsSync(diretorio)) {fs.mkdirSync(diretorio, { recursive: true });
   
                               return res.status(201).send({
                               mensagem: "Usuário cadastrado!",
@@ -69,7 +69,7 @@ exports.postusuarios = (req, res, next) => {
                                   }
                               });
                           }
-                      )
+                        });
                       } 
                       catch{
                           return res.status(409).send({mensagem:'erro na conexao do cadastro' });
