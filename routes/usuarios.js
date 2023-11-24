@@ -29,4 +29,5 @@ router.post('/nova-senha', userController.novasenha);
 router.post('/adicionar-nova-foto', authlogin.opcional, userController.fotousuario);
 
 
+
 module.exports = router;
