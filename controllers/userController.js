@@ -116,7 +116,7 @@ exports.postusuarios = (req, res, next) => {
       let extensao = file.name.split('.').pop();
       let mimeType = mime.lookup(extensao)
       return mimeType && mimeType.startsWith('image');
-  }
+  } 
 
 
 exports.loginusuarios = (req, res, next) => {
@@ -245,11 +245,11 @@ exports.verificasenha = async (req, res) => {
 };
 
 exports.novasenha = (req, res) => {
-  console.log(req.query.token);
+  const token = req.query.token;
   const {senha} = req.body;
   
 
-  jwt.verify(req.query.token, process.env.JWT_KEY, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
     if (err) {
       return res.status(401).json({ error: 'Token inválido ou expirado' });
     }
