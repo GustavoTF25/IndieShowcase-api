@@ -50,12 +50,14 @@ exports.getpostsid = (req, res) => {
 exports.postpostagem = (req, res, next)  => {
     mysql.getConnection((error, conn) => 
     {  
-        if(error) {return res.status(401).send({error:error, mensagem:"Sessao expirada"})}
-        if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
+        if(error) {return res.status(401).send({error:error, mensagem:"Token inválido ou expirado"})}
+        if(error){return res.status(500).send({error: mysql, mensagem: "Erro de conexão com o banco de dados"})} 
         const usuarioId = req.user.usu_id;
         const arquivos = req.files;
         const { titulo, descricao, tags, cat_id } = req.body;
-        //let caminhoArquivo = 'postagens/' + arquivo.name;
+         if (!arquivos || Object.keys(arquivos).length === 0) {
+            return res.status(400).send({ mensagem: "Nenhum arquivo enviado" });
+        }
         conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)', 
         [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id], 
         (error,results) => {
@@ -67,10 +69,10 @@ exports.postpostagem = (req, res, next)  => {
                     if (!fs.existsSync(`postagens/${postagemId}/`)) {fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });}
                     
                     arquivo.mv(caminhoArquivo, (err) => {
-                        if (err) {return res.status(500).send({ error: err, message: "Falha no envio do arquivo" });}
+                        if (err) {return res.status(500).send({ error: err, message: "Falha ao enviar ao diretório interno" });}
                         conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
                         [arquivo.name, arquivo.mimetype, postagemId],
-                        (error) => {if (error) {return res.status(500).send({ error: error, message: "Falha ao inserir no banco" });}}
+                        (error) => {if (error) {return res.status(500).send({ error: error, message: "Falha ao enviar ao servidor" });}}
                         );
                     });
                 }
@@ -129,4 +131,24 @@ exports.postpostagem = (req, res, next)  => {
                 });
             });
         }
+
+    exports.postGostei = (req, res) => {
+            let gostei = ' ';
+            mysql.getConnection((error, conn) => {
+                if(eror){return res.status(500).send({error:error})}
+                    conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id]);
+                    conn.release();
+                    if(results.length > 0 ){
+                        gostei = 0; 
+                        conn.query('UPDATE gos_gostei SET gos_valor = ? where usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id])
+                        conn.release();
+                    }else{
+                        //conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id])
+                        gostei = 1;
+                        conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) ', [req.user.usu_id, req.params.pos_id, gostei])
+                        conn.release();
+                        
+                    }
+            })
+        }     
 

@@ -141,7 +141,7 @@ exports.loginusuarios = (req, res, next) => {
                     email: results[0].email, 
                 }, process.env.JWT_KEY, {
                     algorithm:'HS512',
-                    expiresIn: "2h"
+                    expiresIn: 604800
                 });
                 
                 return res.status(200).send({mensagem: 'Autenticado com sucesso',
