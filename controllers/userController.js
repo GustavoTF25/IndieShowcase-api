@@ -7,6 +7,7 @@ const mime = require('mime-types');
 
 
 
+
 exports.getusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
@@ -243,21 +244,40 @@ exports.verificasenha = async (req, res) => {
     });
 };
 
+exports.novasenha = (req, res) => {
+  console.log(req.query.token);
+  const {senha} = req.body;
+  
 
-exports.novasenha = async (req, res) => {
-    const { token, newPassword } = req.body;
+  jwt.verify(req.query.token, process.env.JWT_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
 
-    // Verifique a validade do token novamente (opcional, mas recomendado)
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+    bcrypt.hash(senha, 10, (err, hash) => {
       if (err) {
-        return res.status(401).json({ error: 'Token inválido ou expirado' });
+        return res.status(500).send({ message: 'nova senha', error: err });
       }
-  
-      // O token é válido, permita ao usuário redefinir a senha
-      // Valide a nova senha e atualize-a no banco de dados
-  
-      // Após a redefinição bem-sucedida da senha, responda com uma confirmação
-      res.status(200).json({ message: 'Senha redefinida com sucesso' });
+
+      mysql.getConnection((error, conn) => {
+        if (error) {
+          return res.status(500).send({ message: 'conexao com banco', error: error });
+        }
+
+        conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_email = ?`, [hash, decoded.email], (error, results) => {
+          conn.release();
+
+          if (error) {
+            return res.status(500).send({ error: error });
+          }
+
+          if (results.affectedRows === 0) {
+            return res.status(404).send({ message: 'Usuário não encontrado' });
+          }
+
+          res.status(200).json({ message: 'Senha redefinida com sucesso' });
+        });
+      });
     });
+  });
 };
-  

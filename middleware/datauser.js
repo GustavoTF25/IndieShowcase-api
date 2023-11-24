@@ -1,20 +1,20 @@
 const jwt = require('jsonwebtoken');
-const segredo = process.env.JWT_KEY;
 
-exports.opcional = (req, res, next) => {
-    try{
-        const token = req.headers.authorization.split(' ')[1];
-        const decoded = jwt.verify(token, segredo, { algorithms: ['HS512'] });
-        req.user = {
-            usu_id: decoded.usu_id
-        };
-        next();
-    } catch (error) {
-    console.log(error)
-        next();
+exports.verificarToken = (req, res, next) => {
+    const authorizationHeader = req.headers.authorization;
+
+    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Token não fornecido ou no formato incorreto' });
     }
-    
   
+    const token = authorizationHeader.replace('Bearer ', '');
+  
+    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ error: 'Token inválido ou expirado' });
+      }
+  
+      req.user = decoded; 
+      next();
+    });
 }
-
-

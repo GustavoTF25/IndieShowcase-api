@@ -1,25 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const mysql = require('../mysql').pool;
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const userController = require('../controllers/userController');
 const authlogin = require('../middleware/authlogin');
-const fileUpload = require('express-fileupload');
 
 
+/*Rotas de usuários*/
 
-
-//Rotas
+//pega todos usuários cadastrados
 router.get('/', userController.getusuarios);
+
+//pega algum usuário pelo seu id
 router.get('/:usu_id', userController.getusuid);
+
+//cadastro e login
 router.post('/cadastro', userController.postusuarios);
 router.post('/login', userController.loginusuarios);
+
+//editar e deletar usuário
 router.patch('/editar', userController.patchusuarios);
 router.delete('/deletar', userController.deleteusuarios);
+
+//Alteração de senha 
 router.post('/esqueci-senha', userController.esquecisenha);
-router.post('/verifica-senha', authlogin.opcional, userController.verificasenha);
-router.post('/nova-senha', authlogin.opcional, userController.novasenha);
+//router.post('/verifica-senha', authlogin.opcional, userController.verificasenha);
+router.post('/nova-senha', userController.novasenha);
+
+//Adicionar nova foto de perfil
 router.post('/adicionar-nova-foto', authlogin.opcional, userController.fotousuario);
 
 
