@@ -1,12 +1,14 @@
 const mysql = require('../mysql').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const fileUpload = require('express-fileupload');
 const transporter = require('../config/mailer');
-const fs = require('fs');
+const fs = require('fs');  
 const mime = require('mime-types');
+const datauser = require('../middleware/datauser');
 
-//sconst express = require('express');
+
+
+
 exports.getusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
@@ -35,84 +37,89 @@ exports.getusuid = (req, res, next) => {
 };
 
 exports.postusuarios = (req, res, next) => {
- 
-  mysql.getConnection((error, conn) => {
-    if(error) {return res.status(500).send({error:error})}
-        //Se já houver email cadastrado
-    conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
-        if(error){return res.status(500).send({error: error})}
-        if(results.length > 0) {
-            res.status(409).send({mensagem: 'usuario já cadastrado!'});
-                }else{
-                    bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                    try{
-                        if(error){return res.status(500).send({error: errBcrypt})}
-                        let imagemCaminho = 'usuarios/fotos/foto.png'
-                        conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
-                        [req.body.nome, req.body.email, hash, imagemCaminho],   
-                        (error,results) => {
-                        conn.release();
-                        let userId = results.insertId;
-                        let diretorio = `usuarios/fotos/${userId}/`;
-                        if(!fs.existsSync(diretorio)){fs.mkdirSync(diretorio)/*, {recursive: true} */};
+    mysql.getConnection((error, conn) => {
+      if(error) {return res.status(500).send({error:error})}
+          //Se já houver email cadastrado
+      conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
+          if(error){return res.status(500).send({error: error})}
+          if(results.length > 0) {
+              res.status(409).send({mensagem: 'usuario já cadastrado!'});
+                  }else{
+                      bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
+                      try{
+                          if(error){return res.status(500).send({error: errBcrypt})}
+                          let imagemCaminho = 'usuarios/fotos/foto.jpeg'
+                          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
+                          [req.body.nome, req.body.email, hash, imagemCaminho],   
+                          (error,results) => {
+                          conn.release();
+                              
+                          let userId = results.insertId;
+                          //console.log(userId);
+                          
+                          let diretorio = `usuarios/fotos/${userId}/`;
+                          if (!fs.existsSync(diretorio)) {fs.mkdirSync(diretorio, { recursive: true });
+  
+                              return res.status(201).send({
+                              mensagem: "Usuário cadastrado!",
+                              usuariocriado: {
+                                  usu_id : results.insertId,
+                                  nome: req.body.nome,
+                                  email: req.body.email,
+                                  foto:  imagemCaminho,
+                                  diretorio: diretorio
+                                  }
+                              });
+                          }
+                        });
+                      } 
+                      catch{
+                          return res.status(409).send({mensagem:'erro na conexao do cadastro' });
+                      }
+                  }) 
+              } 
+          }) 
+      }); 
+     
+  };
 
-                            return res.status(201).send({
-                            mensagem: "Usuário cadastrado!",
-                            usuariocriado: {
-                                usu_id : results.insertId,
-                                nome: req.body.nome,
-                                email: req.body.email,
-                                foto:  imagemCaminho,
-                                diretorio: diretorio
-                                }
-                            });//results
-                        }//insert
-                    )//conn query
-                    } //do try
-                    catch{
-                        return res.status(409).send({mensagem:'erro na conexao do cadastro' });
-                    }
-                }) //bcrypt hash
-            } 
-        }) // conn query
-    }); // mysql connect
-   
-};
 
-exports.fotousuario = (req, res, next) =>
-{
-    mysql.getConnection((error,conn) => {
-    let usuarioId = req.user.usu_id; 
-    let {foto} = req.files;
-    if(!isImagem(foto)){return res.status(400).send({mensagem: "Arquivo nao suportado"})}  
-   
-    if(foto){
-        imagemCaminho = `usuarios/fotos/${usuarioId}/` /* + new Date().toISOString().replace(/:/g,'-')+'-' */ +foto.name;
-        if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
-        fs.readdirSync(`usuarios/fotos/${usuarioId}`).forEach(f => fs.rmSync(`usuarios/fotos/${usuarioId}/${f}`));
-        foto.mv(imagemCaminho);  
-    }else{
-        imagemCaminho = 'usuarios/fotos/foto.png' ; 
-    }
-    //console.log(foto)
-    conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
-    [imagemCaminho],(error,results) => { 
-        conn.release();
-        return res.status(201).send({
-            mensagem: "Foto alterada com sucesso!",
-            usuariocriado: {
-                usu_id: usuarioId,
-                foto:  imagemCaminho
-                }
-            });
-        });
-    });
-}
-function isImagem(file){
-    let extensao = file.name.split('.').pop();
-    let mimeType = mime.lookup(extensao)
-    return mimeType && mimeType.startsWith('image');
-}
+  exports.fotousuario = (req, res, next) =>
+  {
+      mysql.getConnection((error,conn) => {
+      let usuarioId = req.user.usu_id;
+      let {foto} = req.files;
+      if(!isImagem(foto)){return res.status(400).send({mensagem: "Arquivo nao suportado"})}  
+     
+      if(foto){
+          imagemCaminho = `usuarios/fotos/${usuarioId}/` /* + new Date().toISOString().replace(/:/g,'-')+'-' */ +foto.name;
+          if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
+          fs.readdirSync(`usuarios/fotos/${usuarioId}`).forEach(f => fs.rmSync(`usuarios/fotos/${usuarioId}/${f}`));
+          foto.mv(imagemCaminho);  
+      }else{
+          imagemCaminho = 'usuarios/fotos/foto.png' ; 
+      }
+  
+      conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
+      [imagemCaminho],(error,results) => { 
+          conn.release();
+          return res.status(201).send({
+              mensagem: "Foto alterada com sucesso!",
+              usuariocriado: {
+                  usu_id: usuarioId,
+                  foto:  imagemCaminho
+                  }
+              });
+          });
+      });
+  }
+  function isImagem(file){
+      let extensao = file.name.split('.').pop();
+      let mimeType = mime.lookup(extensao)
+      return mimeType && mimeType.startsWith('image');
+  }
+
+
 exports.loginusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}
@@ -174,7 +181,7 @@ exports.patchusuarios = (req, res, next) => {
             conn.release();
             if(error) { return res.status(500).send({error: error})}
             res.status(202).send({
-                mensagem: 'Usuário removido'
+                mensagem: 'Usuário deletado'
         });
        }
       )
@@ -198,10 +205,10 @@ exports.esquecisenha = async (req, res, results) => {
     //console.log(resetToken);
     const resetLink = `http://localhost:8000/esqueci-senha?token=${resetToken}`;
     const mailOptions = {
-    from: 'gustavotet2022@outlook.com.br',
+    from: 'aureosilva13@outlook.com',
     to: email,
     subject: 'Recuperação de Senha',
-    html: `Clique <a href="${resetLink}">aqui</a> para redefinir sua senha.`,
+    html: `Clique <a href="${resetLink}">aqui</a> para redefinir sua senha.`, 
   };
 
 
@@ -239,20 +246,40 @@ exports.verificasenha = async (req, res) => {
 };
 
 
-exports.novasenha = async (req, res) => {
-    const { token, newPassword } = req.body;
+exports.novasenha = (req, res) => {
+  console.log(req.query.token);
+  const {senha} = req.body;
+  
 
-    // Verifique a validade do token novamente (opcional, mas recomendado)
-    jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
+  jwt.verify(req.query.token, process.env.JWT_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Token inválido ou expirado' });
+    }
+
+    bcrypt.hash(senha, 10, (err, hash) => {
       if (err) {
-        return res.status(401).json({ error: 'Token inválido ou expirado' });
+        return res.status(500).send({ message: 'nova senha', error: err });
       }
-  
-      // O token é válido, permita ao usuário redefinir a senha
-      // Valide a nova senha e atualize-a no banco de dados
-  
-      // Após a redefinição bem-sucedida da senha, responda com uma confirmação
-      res.status(200).json({ message: 'Senha redefinida com sucesso' });
+
+      mysql.getConnection((error, conn) => {
+        if (error) {
+          return res.status(500).send({ message: 'conexao com banco', error: error });
+        }
+
+        conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_email = ?`, [hash, decoded.email], (error, results) => {
+          conn.release();
+
+          if (error) {
+            return res.status(500).send({ error: error });
+          }
+
+          if (results.affectedRows === 0) {
+            return res.status(404).send({ message: 'Usuário não encontrado' });
+          }
+
+          res.status(200).json({ message: 'Senha redefinida com sucesso' });
+        });
+      });
     });
+  });
 };
-  
