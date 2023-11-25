@@ -9,7 +9,8 @@ const fileUpload = require('express-fileupload');
 
 
 app.use(morgan('dev'));
-app.use('/postagens/uploads', express.static('uploads'))
+//app.use('/postagens/uploads', express.static('uploads'))
+app.use('/postagens', express.static('postagens'));
 app.use(express.json());
 app.use(cors());
 app.use(
