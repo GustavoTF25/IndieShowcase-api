@@ -247,6 +247,7 @@ exports.verificasenha = async (req, res) => {
 exports.novasenha = (req, res) => {
   const token = req.query.token;
   const {senha} = req.body;
+  console.log(req)
   
 
   jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
