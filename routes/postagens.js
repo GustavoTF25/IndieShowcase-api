@@ -25,14 +25,14 @@ router.get('/:pos_id', postController.getpostsid);
 //publicar postagem
 router.post('/publicar', authlogin.opcional, postController.postpostagem);
 
+//Lista as postagens por categoria
+router.get('/listar/:cat_id', postController.getcategoriaspost)
+
 //Lista todos os comentários
 router.get('/comentar/todos', postController.getComentarios);
 
 //Lista os comentários de uma determinada postagem
-router.get('/comentar/comentarios/:pos_id', postController.getComentariospost);
-
-//Lista as postagens por categoria
-router.get('/listar/:cat_nome', postController.getcategoriaspost)
+router.get('/comentarios/:pos_id', postController.getComentariospost);
 
 //comentar em alguma postagem
 router.post('/comentar/:pos_id', authlogin.opcional, postController.postComentario);

@@ -33,6 +33,8 @@ exports.getpoststitulo = (req, res, next) => {
 });
 }
 
+
+
 exports.getpostsid = (req, res) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})};
@@ -265,7 +267,7 @@ function getCircularReplacer() {
                         conn.query('UPDATE gos_gostei SET gos_valor = ? where usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id])
                         conn.release();
                     }else{
-                        //conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id])
+                        conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id])
                         gostei = 1;
                         conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) ', [req.user.usu_id, req.params.pos_id, gostei])
                         conn.release();
@@ -275,10 +277,36 @@ function getCircularReplacer() {
         }     
 
  exports.getComentariospost = (req, res) => {
-
+    if (!req.params.pos_id) {
+        return res.status(400).send({ error: 'Parâmetro de id de postagem ausente' });
+    }   
+    mysql.getConnection((error, conn) => {
+        if(error) {return res.status(500).send({error:error})};
+        conn.query(
+        `Select * FROM com_comentarios where pos_id LIKE '%${req.params.pos_id}%'`,
+        (error, resultado, fields) => {
+        conn.release();
+        if(error) {return res.status(500).send({error:error})};
+        return res.status(200).send({response: resultado});
+    }
+    );
+});
  }
 
  exports.getcategoriaspost = (req, res) => {
-    
+    if (!req.params.cat_id) {
+        return res.status(400).send({ error: 'Parâmetro de id de categoria ausente' });
+    }
+    mysql.getConnection((error, conn) => {
+        if(error) {return res.status(500).send({error:error})};
+        conn.query(
+        `Select * FROM pos_postagem where cat_id LIKE '%${req.params.cat_id}%'`,
+        (error, resultado, fields) => {
+        conn.release(); 
+        if(error) {return res.status(500).send({error:error})};
+        return res.status(200).send({response: resultado});
+    }
+    );
+});
  }
 
