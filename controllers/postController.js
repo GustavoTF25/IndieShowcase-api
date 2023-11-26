@@ -274,3 +274,11 @@ function getCircularReplacer() {
             })
         }     
 
+ exports.getComentariospost = (req, res) => {
+
+ }
+
+ exports.getcategoriaspost = (req, res) => {
+    
+ }
+

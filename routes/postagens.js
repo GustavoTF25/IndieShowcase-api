@@ -28,6 +28,12 @@ router.post('/publicar', authlogin.opcional, postController.postpostagem);
 //Lista todos os comentários
 router.get('/comentar/todos', postController.getComentarios);
 
+//Lista os comentários de uma determinada postagem
+router.get('/comentar/comentarios/:pos_id', postController.getComentariospost);
+
+//Lista as postagens por categoria
+router.get('/listar/:cat_nome', postController.getcategoriaspost)
+
 //comentar em alguma postagem
 router.post('/comentar/:pos_id', authlogin.opcional, postController.postComentario);
 
