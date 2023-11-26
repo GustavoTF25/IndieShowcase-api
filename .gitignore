@@ -2,5 +2,5 @@ node_modules/
 .env
 uploads/*
 usuarios/*
-fotos/*
+fotos/
 postagens/*
