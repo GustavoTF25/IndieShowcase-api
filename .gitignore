@@ -1,6 +1,5 @@
 node_modules/
 .env
 uploads/*
-usuarios/*
-fotos/
+usuarios/fotos/*
 postagens/*
