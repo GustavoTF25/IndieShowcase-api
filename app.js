@@ -13,12 +13,12 @@ app.use(morgan('dev'));
 app.use('/postagens', express.static('postagens'));
 app.use(express.json());
 app.use(cors());
-app.use(
-    fileUpload({
-        limits: { fileSize: 24 * 1024 * 1024 /* mais ou memnos 50MB */},
-        abortOnLimit: true,
-    })
-);
+// app.use(
+//     fileUpload({
+//         limits: { fileSize: 24 * 1024 * 1024 /* mais ou memnos 50MB */},
+//         abortOnLimit: true,
+//     })
+// );
 
 
 app.use('/usuarios', rotaUsuarios);

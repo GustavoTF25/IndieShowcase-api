@@ -2,8 +2,15 @@ const express = require('express');
 const router = express.Router();
 const authlogin = require('../middleware/authlogin');
 const postController = require('../controllers/postController')
+const fileUpload = require('express-fileupload');
 
 /*Rotas de postagens*/
+router.use(
+    fileUpload({
+        limits: { fileSize: 24 * 1024 * 1024 * 1024 /* mais ou memnos 26MB */},
+        abortOnLimit: true,
+    })
+);
 
 
 //Pega todas as postagens 
