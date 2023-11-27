@@ -153,21 +153,19 @@ function isImagem(file){
             });
         }
 
-
         exports.postGostei = (req, res) => {
             let gostei = 0;
             mysql.getConnection((error, conn) => {
                 if (error) {return res.status(500).send({ error: error });}
-                // Verificar se o usuário já curtiu a postagem
                 conn.query('SELECT usu_id, pos_id, gos_valor FROM gos_gostei WHERE usu_id = ? AND pos_id = ?', [req.user.usu_id, req.params.pos_id], (error, results) => {
                     if (error) { conn.release();
                         return res.status(500).send({ error: error });
                     }
-                    // Se o usuário já curtiu, remova o gostei
                     if (results.length > 0) {
                         gostei = results[0].gos_valor === 0 ? 1 : 0;
                         conn.query('UPDATE gos_gostei SET gos_valor = ? WHERE usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id], (error, results) => {
                             conn.release();
+                            conn.query('update pos_postagem set pos_qtdgostei = ( select coalesce(sum(gos_valor),0) from gos_gostei where pos_postagem.pos_id = gos_gostei.pos_id ) where pos_id in (select pos_id from gos_gostei);')
                             if (error) {return res.status(500).send({ error: error });}
                             if (gostei === 0) {
                                 return res.status(200).send({ mensagem: "Gostei removido com sucesso" });
@@ -176,18 +174,19 @@ function isImagem(file){
                             }
                         });
                     } else {
-                        // Se o usuário ainda não curtiu, adicione o gostei
                         gostei = 1;
-                       conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) VALUES (?, ?, ?)', [req.user.usu_id, req.params.pos_id, gostei], (error, results) => {
-                        conn.release();
-                        if (error) {return res.status(500).send({ error: error });}
-                        
+                        conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) VALUES (?, ?, ?)', [req.user.usu_id, req.params.pos_id, gostei], (error, results) => {
+                            conn.release();
+                            if (error) {
+                                return res.status(500).send({ error: error });
+                            }
                             return res.status(200).send({ mensagem: "Gostei adicionado com sucesso" });
                         });
                     }
                 });
             });
         };
+
 
 
  exports.getComentariospost = (req, res) => {

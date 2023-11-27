@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const authlogin = require('../middleware/authlogin');
+const decodetoken = require('../middleware/decodetoken');
 
 
 /*Rotas de usuários*/
@@ -22,11 +22,10 @@ router.delete('/deletar', userController.deleteusuarios);
 
 //Alteração de senha 
 router.post('/esqueci-senha', userController.esquecisenha);
-//router.post('/verifica-senha', authlogin.opcional, userController.verificasenha);
 router.post('/nova-senha', userController.novasenha);
 
 //Adicionar nova foto de perfil
-router.post('/adicionar-nova-foto', authlogin.opcional, userController.fotousuario);
+router.post('/adicionar-nova-foto', decodetoken.decodifica, userController.fotousuario);
 
 
 

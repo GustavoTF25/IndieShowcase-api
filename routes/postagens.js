@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const authlogin = require('../middleware/authlogin');
+const decodetoken = require('../middleware/decodetoken');
 const postController = require('../controllers/postController')
 const fileUpload = require('express-fileupload');
 
@@ -23,7 +23,7 @@ router.get ('/procurar/:titulo', postController.getpoststitulo);
 router.get('/:pos_id', postController.getpostsid);
 
 //publicar postagem
-router.post('/publicar', authlogin.opcional, postController.postpostagem);
+router.post('/publicar', decodetoken.decodifica, postController.postpostagem);
 
 //Lista as postagens por categoria
 router.get('/listar/:cat_id', postController.getcategoriaspost)
@@ -35,9 +35,9 @@ router.get('/comentar/todos', postController.getComentarios);
 router.get('/comentarios/:pos_id', postController.getComentariospost);
 
 //comentar em alguma postagem
-router.post('/comentar/:pos_id', authlogin.opcional, postController.postComentario);
+router.post('/comentar/:pos_id', decodetoken.decodifica, postController.postComentario);
 
-router.post('/gostei/:pos_id', authlogin.opcional, postController.postGostei);
+router.post('/gostei/:pos_id', decodetoken.decodifica, postController.postGostei);
 
 
 module.exports = router;
