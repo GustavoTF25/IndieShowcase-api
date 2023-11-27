@@ -11,8 +11,10 @@ exports.opcional = (req, res, next) => {
         };
         next();
     } catch (error) {
-    console.log(error)
+        return res.status(401).send({ mensagem: "Sessão expirada, logue novamente" });
+        //console.log("Token expirado", 401)
         next();
+
     }
     
   
