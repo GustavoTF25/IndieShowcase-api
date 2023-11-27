@@ -17,5 +17,7 @@ router.get ('/procurar/:titulo', postController.getpoststitulo);
 router.get('/:pos_id', postController.getpostsid);
 router.post('/publicar', authlogin.opcional, postController.postpostagem);
 router.post('/comentar/:pos_id', authlogin.opcional, postController.postComentario);
+router.get('/listar/:cat_id', postController.getcategoriaspost);
+router.post('/gostei/:pos_id', authlogin.opcional, postController.postGostei);
 
 module.exports = router;
