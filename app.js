@@ -11,7 +11,7 @@ const fileUpload = require('express-fileupload');
 
 app.use(morgan('dev'));
 app.use('/postagens/uploads' ,express.static('uploads'))
-app.use('/usuarios/fotos/:usu_id' ,express.static('fotos'))
+app.use('/usuarios/' ,express.static('usuarios'))
 app.use(bodyParser.urlencoded({extended: false})); // apenas dados simples
 app.use(bodyParser.json());
 app.use(cors());
