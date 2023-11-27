@@ -38,24 +38,24 @@ exports.getusuid = (req, res, next) => {
 exports.postusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => {
       if(error) {return res.status(500).send({error:error})}
-          //Se já houver email cadastrado
+        if (!req.body.nome || !req.body.email || !req.body.senha) {
+            conn.release();
+            return res.status(400).send({ mensagem: 'Todos os campos são obrigatórios' });
+        }
       conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error,results) => {
           if(error){return res.status(500).send({error: error})}
           if(results.length > 0) {
               res.status(409).send({mensagem: 'usuario já cadastrado!'});
                   }else{
                       bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                      try{
+                      
                           if(error){return res.status(500).send({error: errBcrypt})}
                           let imagemCaminho = 'usuarios/fotos/foto.jpeg'
                           conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
                           [req.body.nome, req.body.email, hash, imagemCaminho],   
                           (error,results) => {
                           conn.release();
-                              
-                          let userId = results.insertId;
-                          //console.log(userId);
-                          
+                          let userId = results.insertId;                          
                           let diretorio = `usuarios/fotos/${userId}/`;
                           if (!fs.existsSync(diretorio)) {fs.mkdirSync(diretorio, { recursive: true });
   
@@ -71,10 +71,6 @@ exports.postusuarios = (req, res, next) => {
                               });
                           }
                         });
-                      } 
-                      catch{
-                          return res.status(409).send({mensagem:'erro na conexao do cadastro' });
-                      }
                   }) 
               } 
           }) 
@@ -135,7 +131,7 @@ exports.postusuarios = (req, res, next) => {
                 return res.status(500).send({ error: error });
             }
             if (results.length < 1) {
-                return res.status(401).send({ mensagem: 'Usuário ou e-mail não encontrado' });
+                return res.status(404).send({ mensagem: 'Usuário ou e-mail não encontrado' });
             }
             bcrypt.compare(senha, results[0].usu_senha, (err, result) => {
                 if (err) {
@@ -146,6 +142,7 @@ exports.postusuarios = (req, res, next) => {
                         usu_id: results[0].usu_id,
                         usu_nome: results[0].usu_nome,
                         email: results[0].usu_email,
+                        usu_foto:results[0].usu_foto
                     }, process.env.JWT_KEY, {
                         algorithm: 'HS512',
                         expiresIn: 10800,
@@ -161,43 +158,6 @@ exports.postusuarios = (req, res, next) => {
     });
 };
 
-
-
-/*exports.loginusuarios = (req, res, next) => {
-    mysql.getConnection((error,conn) =>{
-        if(error) {return res.status(500).send({error: error})}
-        const query = `SELECT * FROM usu_usuario WHERE usu_email = ?`;
-        conn.query(query, [req.body.email], (error, results, fields) =>{
-            conn.release();
-            if(error) {return res.status(500).send({error: error})};
-            if(results.length < 1) {
-                return res.status(401).send({mensagem: 'Usuário ou email não encontrado'});
-            };
-           bcrypt.compare(req.body.senha, results[0].usu_senha, (err, result) => {
-            if(err){
-                return res.status(401).send({mensagem: 'Senha Incorreta'});
-            }
-            if(result){
-                
-                let token = jwt.sign({
-                    usu_id: results[0].usu_id,
-                    usu_nome: results[0].usu_nome,
-                    email: results[0].email, 
-                }, process.env.JWT_KEY, {
-                    algorithm:'HS512',
-                    expiresIn: 10800
-                });
-                
-                return res.status(200).send({mensagem: 'Autenticado com sucesso',
-                token: token
-            });
-            }
-            return res.status(401).send({mensagem : 'Email ou Senha Incorreta'})
-
-           });
-        });
-    });
-};*/
 
 exports.patchusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{

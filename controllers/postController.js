@@ -1,10 +1,6 @@
 const mysql = require('../mysql').pool;
 const fs = require('fs');
 const mime = require('mime-types');
-const uploads = "./postagens/";
-if (!fs.existsSync(uploads)) {
-  fs.mkdirSync(uploads);
-}
 
 
 
@@ -200,7 +196,8 @@ function isImagem(file){
         (error, resultado, fields) => {
         conn.release();
         if(error) {return res.status(500).send({error:error})};
-        return res.status(200).send({response: resultado});
+        return res.status(200).send({
+            response:resultado });
     }
     );
 });
@@ -222,4 +219,29 @@ function isImagem(file){
     );
 });
  }
+ exports.patchpostagem = (req, res, next) => {
+    mysql.getConnection((error,conn) =>{
+        if(error) {return res.status(500).send({error: error})}
+        conn.query(`UPDATE pos_postagem SET pos_nome = ? WHERE pos_id =?`,
+        [req.body.nome, req.params.pos_id],
+        (error, resultado, fields) => {
+            conn.release();
+            if(error) { return res.status(500).send({error: error})}
+            res.status(202).send({
+                mensagem: 'Postagem Editada'
+        });
+       }
+      )
+   });
+ };
 
+ exports.delPostagem = ( req, res, next ) => {
+    mysql.getConnection((error, conn) => {
+        if(error){return res.status(500).send({error:error})}
+        conn.query(`DELETE FROM pos_postagem WHERE pos_id = ${req.params.pos_id}`,(error, results) => {
+            conn.release();
+            if(error){return res.status(500).send({message:"Postagem nao encontrada"})}
+            res.status(200).send({response: results})
+        })
+    })
+}

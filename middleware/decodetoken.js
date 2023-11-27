@@ -7,7 +7,8 @@ exports.decodifica = (req, res, next) => {
         const decoded = jwt.verify(token, segredo, { algorithms: ['HS512', 'HS256'] })
         req.user = {
             usu_id: decoded.usu_id,
-            email: decoded.usu_email
+            email: decoded.usu_email,
+            foto: decoded.usu_foto
         }
         next();
     } catch (error) {
