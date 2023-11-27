@@ -118,8 +118,52 @@ exports.postusuarios = (req, res, next) => {
       return mimeType && mimeType.startsWith('image');
   } 
 
+  exports.loginusuarios = (req, res, next) => {
+    mysql.getConnection((error, conn) => {
+        if (error) {
+            return res.status(500).send({ error: error });
+        }
+        const { email, senha } = req.body;
+        if (!email || !senha) {
+            conn.release();
+            return res.status(400).send({ mensagem: 'E-mail e senha são obrigatórios' });
+        }
+        const query = 'SELECT * FROM usu_usuario WHERE usu_email = ?';
+        conn.query(query, [email], (error, results) => {
+            conn.release();
+            if (error) {
+                return res.status(500).send({ error: error });
+            }
+            if (results.length < 1) {
+                return res.status(401).send({ mensagem: 'Usuário ou e-mail não encontrado' });
+            }
+            bcrypt.compare(senha, results[0].usu_senha, (err, result) => {
+                if (err) {
+                    return res.status(401).send({ mensagem: 'Senha incorreta' });
+                }
+                if (result) {
+                    const token = jwt.sign({
+                        usu_id: results[0].usu_id,
+                        usu_nome: results[0].usu_nome,
+                        email: results[0].usu_email,
+                    }, process.env.JWT_KEY, {
+                        algorithm: 'HS512',
+                        expiresIn: 10800,
+                    });
+                    return res.status(200).send({
+                        mensagem: 'Autenticado com sucesso',
+                        token: token,
+                    });
+                };
+                return res.status(401).send({ mensagem: 'Email ou Senha Incorreta' });
+            });
+        });
+    });
+};
 
-exports.loginusuarios = (req, res, next) => {
+
+
+/*exports.loginusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}
         const query = `SELECT * FROM usu_usuario WHERE usu_email = ?`;
@@ -141,7 +185,7 @@ exports.loginusuarios = (req, res, next) => {
                     email: results[0].email, 
                 }, process.env.JWT_KEY, {
                     algorithm:'HS512',
-                    expiresIn: 604800
+                    expiresIn: 10800
                 });
                 
                 return res.status(200).send({mensagem: 'Autenticado com sucesso',
@@ -153,7 +197,7 @@ exports.loginusuarios = (req, res, next) => {
            });
         });
     });
-};
+};*/
 
 exports.patchusuarios = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
@@ -204,7 +248,7 @@ exports.esquecisenha = async (req, res, results) => {
     //console.log(resetToken);
     const resetLink = `http://localhost:8000/esqueci-senha?token=${resetToken}`;
     const mailOptions = {
-    from: 'gustavotet2022@outlook.com.br',
+    from: 'indieshowcase@outlook.com.br',
     to: email,
     subject: 'Recuperação de Senha',
     html: `Clique <a href="${resetLink}">aqui</a> para redefinir sua senha.`,
@@ -229,7 +273,6 @@ exports.esquecisenha = async (req, res, results) => {
 
 exports.verificasenha = async (req, res) => {
     const token = req.query.token;
-
     console.log('Token recebido:', token);
 
     jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
@@ -237,9 +280,7 @@ exports.verificasenha = async (req, res) => {
         console.error('Erro ao verificar o token:', err);
         return res.status(401).json({ error: 'Token inválido ou expirado' });
       }
-
       console.log('Token decodificado:', decoded.email);
-
       res.render('reset-password-form', { token });
     });
 };
@@ -247,8 +288,6 @@ exports.verificasenha = async (req, res) => {
 exports.novasenha = (req, res) => {
   const token = req.query.token;
   const {senha} = req.body;
-  console.log(req)
-  
 
   jwt.verify(token, process.env.JWT_KEY, (err, decoded) => {
     if (err) {
@@ -262,7 +301,7 @@ exports.novasenha = (req, res) => {
 
       mysql.getConnection((error, conn) => {
         if (error) {
-          return res.status(500).send({ message: 'conexao com banco', error: error });
+          return res.status(500).send({ message: 'Falha na conexão com o banco de dados', error: error });
         }
 
         conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_email = ?`, [hash, decoded.email], (error, results) => {
