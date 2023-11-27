@@ -7,6 +7,7 @@ if (!fs.existsSync(uploads)) {
 }
 
 
+
 exports.getallposts = (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})};
@@ -115,110 +116,6 @@ function isImagem(file){
     return mimeType && mimeType.startsWith('image');
 }
 
- /*exports.postpostagem = (req, res, next) => {
-    mysql.getConnection((error, conn) => {
-        if (error) {
-            return res.status(500).send({ error: mysql, mensagem: "erro ao inserir no banco" });
-        }
-
-        const usuarioId = req.user.usu_id;
-        const arquivos = req.files;
-        const { capa } = req.files;
-        const { titulo, descricao, tags, cat_id } = req.body;
-
-        if (!arquivos || Object.keys(arquivos).length === 0) {
-            conn.release();
-            return res.status(400).send({ mensagem: "Nenhum arquivo enviado" });
-        }
-
-        if (!isImagem(capa)) {
-            conn.release();
-            return res.status(400).send({ mensagem: "Esse arquivo deve ser uma imagem" });
-        }
-
-        conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)',
-            [titulo, descricao, tags, usuarioId, cat_id],
-            (error, results) => {
-                if (error) {
-                    conn.release();
-                    return res.status(500).send({ error: error, message: "Erro ao inserir no banco" });
-                }
-
-                const postagemId = results.insertId;
-                const caminhoCapa = `postagens/${postagemId}/` + (capa ? capa.name : '');
-
-                conn.query(`UPDATE pos_postagem SET pos_capa = ? WHERE pos_id = ${postagemId}`, [caminhoCapa], (error) => {
-                    conn.release();
-                    if (error) {
-                        return res.status(500).send({ error: error, message: "Erro ao atualizar caminho da capa" });
-                    }
-
-                    const inserirArquivo = (arquivo) => {
-                        if (arquivo) {
-                            const caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
-                            if (!fs.existsSync(`postagens/${postagemId}/`)) {
-                                fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });
-                            }
-
-                            arquivo.mv(caminhoArquivo, (err) => {
-                                if (err) {
-                                    return res.status(500).send({ error: err, message: "Falha no envio do arquivo" });
-                                }
-
-                                conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
-                                    [arquivo.name, arquivo.mimetype, postagemId],
-                                    (error) => {
-                                        if (error) {
-                                            return res.status(500).send({ error: error, message: "Falha no envio do arquivo no servidor" });
-                                        }
-                                    });
-                            });
-                        }
-                    };
-
-                    Object.values(arquivos).forEach(inserirArquivo);
-
-                    const arquivosSimples = Object.values(arquivos).map((arquivo) => arquivo.name);
-
-                    const response = {
-                        mensagem: "Postagem criada!",
-                        postagemcriada: {
-                            pos_id: postagemId,
-                            titulo: titulo,
-                            descricao: descricao,
-                            tags: tags,
-                            usu_id: usuarioId,
-                            cat_id: cat_id,
-                            capa: capa ? capa.name : null,
-                            arquivos: arquivosSimples,
-                        },
-                    };
-
-                    return res.status(201).send(JSON.parse(JSON.stringify(response, getCircularReplacer())));
-                });
-            });
-    });
-};
-
-function isImagem(file) {
-    let extensao = file.name.split('.').pop();
-    let mimeType = mime.lookup(extensao);
-    return mimeType && mimeType.startsWith('image');
-}
-
-function getCircularReplacer() {
-    const seen = new WeakSet();
-    return (key, value) => {
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return;
-            }
-            seen.add(value);
-        }
-        return value;
-    };
-}*/
-
 
    exports.getComentarios = (req, res) => {
             mysql.getConnection((error, conn) => {
@@ -248,7 +145,7 @@ function getCircularReplacer() {
                         postagemcriada: {
                             usu_id: req.user.usu_id,
                             pos_id: req.params.pos_id,
-                            texto : req.body.texto
+                            texto : req.body.texto,
                         }
                     }
                     return res.status(201).send(response);
@@ -256,25 +153,42 @@ function getCircularReplacer() {
             });
         }
 
-    exports.postGostei = (req, res) => {
-            let gostei = ' ';
+
+        exports.postGostei = (req, res) => {
+            let gostei = 0;
             mysql.getConnection((error, conn) => {
-                if(eror){return res.status(500).send({error:error})}
-                    conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id]);
-                    conn.release();
-                    if(results.length > 0 ){
-                        gostei = 0; 
-                        conn.query('UPDATE gos_gostei SET gos_valor = ? where usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id])
-                        conn.release();
-                    }else{
-                        conn.query('SELECT usu_id, pos_id FROM gos_gostei', [req.user.usu_id, req.params.pos_id])
-                        gostei = 1;
-                        conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) ', [req.user.usu_id, req.params.pos_id, gostei])
-                        conn.release();
-                        
+                if (error) {return res.status(500).send({ error: error });}
+                // Verificar se o usuário já curtiu a postagem
+                conn.query('SELECT usu_id, pos_id, gos_valor FROM gos_gostei WHERE usu_id = ? AND pos_id = ?', [req.user.usu_id, req.params.pos_id], (error, results) => {
+                    if (error) { conn.release();
+                        return res.status(500).send({ error: error });
                     }
-            })
-        }     
+                    // Se o usuário já curtiu, remova o gostei
+                    if (results.length > 0) {
+                        gostei = results[0].gos_valor === 0 ? 1 : 0;
+                        conn.query('UPDATE gos_gostei SET gos_valor = ? WHERE usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id], (error, results) => {
+                            conn.release();
+                            if (error) {return res.status(500).send({ error: error });}
+                            if (gostei === 0) {
+                                return res.status(200).send({ mensagem: "Gostei removido com sucesso" });
+                            } else {
+                                return res.status(200).send({ mensagem: "Gostei adicionado com sucesso" });
+                            }
+                        });
+                    } else {
+                        // Se o usuário ainda não curtiu, adicione o gostei
+                        gostei = 1;
+                       conn.query('INSERT INTO gos_gostei (usu_id, pos_id, gos_valor) VALUES (?, ?, ?)', [req.user.usu_id, req.params.pos_id, gostei], (error, results) => {
+                        conn.release();
+                        if (error) {return res.status(500).send({ error: error });}
+                        
+                            return res.status(200).send({ mensagem: "Gostei adicionado com sucesso" });
+                        });
+                    }
+                });
+            });
+        };
+
 
  exports.getComentariospost = (req, res) => {
     if (!req.params.pos_id) {

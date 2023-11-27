@@ -37,7 +37,7 @@ router.get('/comentarios/:pos_id', postController.getComentariospost);
 //comentar em alguma postagem
 router.post('/comentar/:pos_id', authlogin.opcional, postController.postComentario);
 
-router.post('/gostei', postController.postGostei);
+router.post('/gostei/:pos_id', authlogin.opcional, postController.postGostei);
 
 
 module.exports = router;
