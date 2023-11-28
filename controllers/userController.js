@@ -200,7 +200,7 @@ exports.esquecisenha = (req, res, results) => {
             };
             
     let resetToken = jwt.sign( {email}, process.env.JWT_KEY, {expiresIn: '1h'});
-    const resetLink = `http://localhost:8000/esqueci-senha?token=${resetToken}`;
+    const resetLink = `http://localhost:3000/alterarSenha?token=${resetToken}`;
     const mailOptions = {
     from: 'indieshowcase@outlook.com.br',
     to: email,
