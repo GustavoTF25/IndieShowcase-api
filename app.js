@@ -10,24 +10,22 @@ const fileUpload = require('express-fileupload');
  
 
 app.use(morgan('dev'));
-app.use('/postagens/uploads' ,express.static('uploads'))
-app.use('/usuarios/fotos/:usu_id' ,express.static('fotos'))
+app.use('/postagens/' ,express.static('postagens'))
+app.use('/usuarios/' ,express.static('usuarios'))
 app.use(bodyParser.urlencoded({extended: false})); // apenas dados simples
 app.use(bodyParser.json());
 app.use(cors());
- 
-app.use(
-    fileUpload({
-        limits: { fileSize: 24 * 1024 * 1024 /* mais ou memnos 50MB */},
-        abortOnLimit: true,
-    })
-);
-
  
 app.use('/usuarios', rotaUsuarios);
 app.use('/postagens', rotaPostagens);
 app.use('/categorias', rotaCategorias);
 
+app.use(
+    fileUpload({
+        limits: { fileSize: 24 * 1024 * 1024 * 1024 /* mais ou memnos 2GB */},
+        abortOnLimit: true,
+    })
+);
 
 //rota não encontrada
 app.use((req, res, next) => {

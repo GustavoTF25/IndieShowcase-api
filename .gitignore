@@ -1,3 +1,4 @@
 node_modules/
-postagens/
-usuarios/
+postagens/*
+usuarios/fotos/*
+!usuarios/fotos/foto.jpeg

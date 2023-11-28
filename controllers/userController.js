@@ -36,7 +36,7 @@ exports.getusuid = (req, res, next) => {
     });
 };
 
-exports.postusuarios = (req, res, next) => {
+ exports.postusuarios =  (req, res, next) => {
     mysql.getConnection((error, conn) => {
       if(error) {return res.status(500).send({error:error})}
           //Se já houver email cadastrado
@@ -46,7 +46,7 @@ exports.postusuarios = (req, res, next) => {
               res.status(409).send({mensagem: 'usuario já cadastrado!'});
                   }else{
                       bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                      try{
+                      
                           if(error){return res.status(500).send({error: errBcrypt})}
                           let imagemCaminho = 'usuarios/fotos/foto.jpeg'
                           conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
@@ -72,10 +72,10 @@ exports.postusuarios = (req, res, next) => {
                               });
                           }
                         });
-                      } 
-                      catch{
+                      
+                      
                           return res.status(409).send({mensagem:'erro na conexao do cadastro' });
-                      }
+                       
                   }) 
               } 
           }) 
