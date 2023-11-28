@@ -1,7 +1,6 @@
 const mysql = require('../mysql').pool;
 const fs = require('fs');
-const mime =require('mime-types')
- 
+const mime =require('mime-types');
 
 exports.getallposts = (req, res, next) => {
     mysql.getConnection((error, conn) => {
@@ -138,6 +137,7 @@ exports.postpostagem = (req, res, next)  => {
                     usu_id: usuarioId,
                     cat_id: cat_id,
                     capa: caminhoCapa,
+                    capa: caminhoCapa,
                     arquivos: Object.values(arquivos).map((arquivo) => arquivo.name),
                 },
             };
@@ -151,8 +151,7 @@ function isImagem(file){
     return mimeType && mimeType.startsWith('image');
 }
 
-
-   exports.getComentarios = (req, res) => {
+exports.getComentarios = (req, res) => {
             mysql.getConnection((error, conn) => {
                 if(error) {return res.status(500).send({error:error})};
                 conn.query(
