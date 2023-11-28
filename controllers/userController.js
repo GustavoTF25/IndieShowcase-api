@@ -187,7 +187,7 @@ exports.patchusuarios = (req, res, next) => {
 
 };
 
-exports.esquecisenha = async (req, res, results) => {
+exports.esquecisenha = (req, res, results) => {
     const {email} = req.body;
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}
@@ -225,7 +225,7 @@ exports.esquecisenha = async (req, res, results) => {
 
 };
 
-exports.verificasenha = async (req, res) => {
+exports.verificasenha =  (req, res) => {
     const token = req.query.token;
     console.log('Token recebido:', token);
 
