@@ -30,8 +30,6 @@ exports.getpoststitulo = (req, res, next) => {
 });
 }
 
-
-
 exports.getpostsid = (req, res) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})};
@@ -49,7 +47,6 @@ exports.getpostsid = (req, res) => {
 exports.postpostagem = (req, res, next)  => {
     mysql.getConnection((error, conn) => 
     {  
-       
         if(error) {return res.status(401).send({error:error, mensagem:"Erro na capa"})}
         if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
         const usuarioId = req.user.usu_id;
@@ -127,7 +124,7 @@ function isImagem(file){
         }
 
 
-   exports.postComentario = (req, res) => {
+exports.postComentario = (req, res) => {
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})}
                 if(error){return res.status(500).send({error: mysql})}
@@ -149,13 +146,14 @@ function isImagem(file){
             });
         }
 
-        exports.postGostei = (req, res) => {
-            let gostei = 0;
-            mysql.getConnection((error, conn) => {
-                if (error) {return res.status(500).send({ error: error });}
-                conn.query('SELECT usu_id, pos_id, gos_valor FROM gos_gostei WHERE usu_id = ? AND pos_id = ?', [req.user.usu_id, req.params.pos_id], (error, results) => {
-                    if (error) { conn.release();
-                        return res.status(500).send({ error: error });
+exports.postGostei = (req, res) => {
+    let gostei = 0;
+    mysql.getConnection((error, conn) => {
+        if (error) {return res.status(500).send({ error: error });}
+        conn.query('SELECT usu_id, pos_id, gos_valor FROM gos_gostei WHERE usu_id = ? AND pos_id = ?', [req.user.usu_id, req.params.pos_id], (error, results) => {
+             if (error) { 
+                conn.release();
+                 return res.status(500).send({ error: error });
                     }
                     if (results.length > 0) {
                         gostei = results[0].gos_valor === 0 ? 1 : 0;
@@ -202,7 +200,6 @@ function isImagem(file){
     );
 });
  }
-
  exports.getcategoriaspost = (req, res) => {
     if (!req.params.cat_id) {
         return res.status(400).send({ error: 'Parâmetro de id de categoria ausente' });
@@ -210,7 +207,7 @@ function isImagem(file){
     mysql.getConnection((error, conn) => {
         if(error) {return res.status(500).send({error:error})};
         conn.query(
-        `Select * FROM pos_postagem where cat_id LIKE '%${req.params.cat_id}%'`,
+        `Select * FROM pos_postagem pos join cat_categoria cat on pos.cat_id = cat.cat_id where pos.cat_id LIKE '%${req.params.cat_id}%'`,
         (error, resultado, fields) => {
         conn.release(); 
         if(error) {return res.status(500).send({error:error})};
@@ -219,6 +216,24 @@ function isImagem(file){
     );
 });
  }
+ 
+ exports.getcategoriasnomepost = (req, res) => {
+    if (!req.params.cat_nome) {
+        return res.status(400).send({ error: 'Parâmetro nome de categoria ausente' });
+    }
+    mysql.getConnection((error, conn) => {
+        if(error) {return res.status(500).send({error:error})};
+        conn.query(
+        `Select * FROM cat_categoria where cat_nome LIKE '%${req.params.cat_nome}%'`,
+        (error, resultado, fields) => {
+        conn.release(); 
+        if(error) {return res.status(500).send({error:error})};
+        return res.status(200).send({response: resultado});
+    }
+    );
+});
+ }
+
  exports.patchpostagem = (req, res, next) => {
     mysql.getConnection((error,conn) =>{
         if(error) {return res.status(500).send({error: error})}

@@ -5,9 +5,6 @@ const transporter = require('../config/mailer');
 const fs = require('fs');  
 const mime = require('mime-types');
 
-
-
-
 exports.getusuarios = (req, res, next) => {
     mysql.getConnection((error, conn) => { 
         if(error) {return res.status(500).send({error:error})};
@@ -48,7 +45,6 @@ exports.postusuarios = (req, res, next) => {
               res.status(409).send({mensagem: 'usuario já cadastrado!'});
                   }else{
                       bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
-                      
                           if(error){return res.status(500).send({error: errBcrypt})}
                           let imagemCaminho = 'usuarios/fotos/foto.jpeg'
                           conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);', 
@@ -87,14 +83,13 @@ exports.postusuarios = (req, res, next) => {
       if(!isImagem(foto)){return res.status(400).send({mensagem: "Arquivo nao suportado"})}  
      
       if(foto){
-          imagemCaminho = `usuarios/fotos/${usuarioId}/` /* + new Date().toISOString().replace(/:/g,'-')+'-' */ +foto.name;
+          imagemCaminho = `usuarios/fotos/${usuarioId}/` +foto.name;
           if(!fs.existsSync(`usuarios/fotos/${usuarioId}/`)){fs.mkdirSync(`usuarios/fotos/${usuarioId}`), {recursive: true}};
           fs.readdirSync(`usuarios/fotos/${usuarioId}`).forEach(f => fs.rmSync(`usuarios/fotos/${usuarioId}/${f}`));
           foto.mv(imagemCaminho);  
       }else{
           imagemCaminho = 'usuarios/fotos/foto.png' ; 
       }
-  
       conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
       [imagemCaminho],(error,results) => { 
           conn.release();
@@ -152,7 +147,7 @@ exports.postusuarios = (req, res, next) => {
                         token: token,
                     });
                 };
-                return res.status(401).send({ mensagem: 'Email ou Senha Incorreta' });
+                return res.status(401).send({ mensagem: 'Email Incorreto' });
             });
         });
     });
@@ -205,7 +200,6 @@ exports.esquecisenha = async (req, res, results) => {
             };
             
     let resetToken = jwt.sign( {email}, process.env.JWT_KEY, {expiresIn: '1h'});
-    //console.log(resetToken);
     const resetLink = `http://localhost:8000/esqueci-senha?token=${resetToken}`;
     const mailOptions = {
     from: 'indieshowcase@outlook.com.br',

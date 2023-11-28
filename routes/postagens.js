@@ -26,7 +26,9 @@ router.get('/:pos_id', postController.getpostsid);
 router.post('/publicar', decodetoken.decodifica, postController.postpostagem);
 
 //Lista as postagens por categoria
-router.get('/listar/:cat_id', decodetoken.decodifica, postController.getcategoriaspost)
+router.get('/listar/:cat_id', postController.getcategoriaspost)
+router.get('/listarNome/:cat_nome', postController.getcategoriasnomepost)
+
 
 //Lista todos os comentários
 router.get('/comentar/todos', postController.getComentarios);
