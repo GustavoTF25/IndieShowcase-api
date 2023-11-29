@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const segredo = process.env.JWT_KEY;
 
 exports.decodifica = (req, res, next) => {
-    try{
+    try {
         const token = req.headers.authorization.split(' ')[1];
         const decoded = jwt.verify(token, segredo, { algorithms: ['HS512', 'HS256'] })
         req.user = {
@@ -12,11 +12,11 @@ exports.decodifica = (req, res, next) => {
         }
         next();
     } catch (error) {
-        res.status(401).send({mensagem: 'Token Inválido ou expirado'});
+        res.status(401).send({ mensagem: 'Token Inválido ou expirado' });
         next();
     }
-    
-  
+
+
 }
 
 

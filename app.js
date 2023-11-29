@@ -18,7 +18,7 @@ app.use((req, res, next) => {
 app.use(morgan('dev'));
 //app.use('/postagens/uploads', express.static('uploads'))
 app.use('/postagens', express.static('postagens'));
-app.use('/usuarios/' ,express.static('usuarios'))
+app.use('/usuarios/', express.static('usuarios'))
 app.use(express.json());
 app.use(cors());
 // app.use(
@@ -52,7 +52,7 @@ app.use((error, req, res, next) => {
 });
 
 app.use('/teste', (req, res, next) => {
-res.status(200).send({mensagem: 'tudo funcionando'});
+    res.status(200).send({ mensagem: 'tudo funcionando' });
 });
 
 module.exports = app;
