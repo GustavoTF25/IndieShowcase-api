@@ -54,7 +54,7 @@ exports.postusuarios = (req, res, next) => {
                           let userId = results.insertId;                          
                           let diretorio = `usuarios/fotos/${userId}/`;
                           if (!fs.existsSync(diretorio)) {fs.mkdirSync(diretorio, { recursive: true });
-  
+                          if(error){return res.status(500).send({error: error})}
                               return res.status(201).send({
                               mensagem: "Usuário cadastrado!",
                               usuariocriado: {
