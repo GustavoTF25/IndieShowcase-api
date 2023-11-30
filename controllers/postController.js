@@ -266,3 +266,23 @@ exports.delPostagem = (req, res, next) => {
         })
     })
 }
+
+exports.download = (req, res, next) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, `postagens/${req.params.pos_id}/`, filename);
+
+    // Verifica se o arquivo existe
+    if (fs.existsSync(filePath)) {
+        // Define os headers apropriados para o download
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        res.setHeader('Content-Type', 'application/octet-stream');
+
+        // Cria um stream de leitura do arquivo e o envia como resposta
+        const fileStream = fs.createReadStream(filePath);
+        fileStream.pipe(res);
+    } else {
+        // Se o arquivo não existir, retorna um status 404
+        res.status(404).send('Arquivo não encontrado');
+    }
+
+}

@@ -46,9 +46,10 @@ router.post('/gostei/:pos_id', decodetoken.decodifica, postController.postGostei
 router.delete('/apagar-post/:pos_id', postController.delPostagem);
 
 //apagar postagem do usuário
-//router.delete('/remover/:pos_id', decodetoken.decodifica, postController.delPostagemUser); 
-
 router.patch('/editar-post/:pos_id', postController.patchpostagem);
+
+//Download do arquivo da Postagem
+router.get('/download/:arq_nome', postController.download)
 
 
 module.exports = router;
