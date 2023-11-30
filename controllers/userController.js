@@ -11,6 +11,7 @@ exports.getusuarios = (req, res, next) => {
     conn.query(
       'SELECT * FROM usu_usuario',
       (error, resultado, fields) => {
+        conn.release();
         if (error) { return res.status(500).send({ error: error }) }
         return res.status(200).send({ response: resultado });
       }
@@ -25,6 +26,7 @@ exports.getusuid = (req, res, next) => {
       'SELECT * FROM usu_usuario WHERE usu_id = ?',
       [req.params.usu_id],
       (error, resultado, fields) => {
+        conn.release();
         if (error) { return res.status(500).send({ error: error }) }
         return res.status(200).send({ response: resultado });
       }

@@ -10,6 +10,7 @@ exports.getallposts = (req, res, next) => {
         conn.query(
             'SELECT * FROM pos_postagem',
             (error, resultado, fields) => {
+                conn.release();
                 if (error) { return res.status(500).send({ error: error }) }
                 return res.status(200).send({ response: resultado });
             }
@@ -23,6 +24,7 @@ exports.getpoststitulo = (req, res, next) => {
         conn.query(
             `Select * FROM pos_postagem where pos_nome LIKE '%${req.params.titulo}%'`,
             (error, resultado, fields) => {
+                conn.release();
                 if (error) { return res.status(500).send({ error: error }) };
                 return res.status(200).send({ response: resultado });
             }
@@ -37,6 +39,7 @@ exports.getpostsid = (req, res) => {
             `Select * FROM pos_postagem where pos_id = ?`,
             [req.params.pos_id],
             (error, resultado, fields) => {
+                conn.release();
                 if (error) { return res.status(500).send({ error: error }) };
                 return res.status(200).send({ response: resultado });
             }
@@ -115,6 +118,7 @@ exports.getComentarios = (req, res) => {
         conn.query(
             'SELECT * FROM com_comentarios',
             (error, resultado, fields) => {
+                conn.release();
                 if (error) { return res.status(500).send({ error: error }) }
                 return res.status(200).send({ response: resultado });
             }
