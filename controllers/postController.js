@@ -179,7 +179,7 @@ exports.postGostei = (req, res) => {
                     if (error) {
                         return res.status(500).send({ error: error });
                     }
-                    return res.status(200).send({ mensagem: "Gostei adicionado com sucesso" });
+                    return res.status(201).send({ mensagem: "Gostei adicionado com sucesso" });
                 });
             }
         });
