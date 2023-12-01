@@ -266,23 +266,17 @@ exports.delPostagem = (req, res, next) => {
         })
     })
 }
+exports.download = (req, res) => {
+    mysql.getConnection((error, conn) => {
+        if (error) { return res.status(500).send({ error: error }) };
+        conn.query(`Select arq_nome, arq_extensao From arq_arquivos WHERE pos_id = ${req.params.pos_id}`, (error, results) => {
+            conn.release();
+            if (error) { return res.status(409).send({ error: "erro no banco" }) }
+            if (results < 1) { return res.status(404).send({ response: "arquivo ou diretório inexistente" }) }
+            const caminho = `postagens/${req.params.pos_id}/${results[0].arq_nome}`;
+            res.header('Content-Disposition', `attachment; filename=${results[0].arq_nome}.${results[0].arq_extensao}`);
+            res.download(caminho);
 
-exports.download = (req, res, next) => {
-    const filename = req.params.filename;
-    const filePath = path.join(__dirname, `postagens/${req.params.pos_id}/`, filename);
-
-    // Verifica se o arquivo existe
-    if (fs.existsSync(filePath)) {
-        // Define os headers apropriados para o download
-        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-        res.setHeader('Content-Type', 'application/octet-stream');
-
-        // Cria um stream de leitura do arquivo e o envia como resposta
-        const fileStream = fs.createReadStream(filePath);
-        fileStream.pipe(res);
-    } else {
-        // Se o arquivo não existir, retorna um status 404
-        res.status(404).send('Arquivo não encontrado');
-    }
-
+        });
+    })
 }

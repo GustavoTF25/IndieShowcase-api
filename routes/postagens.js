@@ -7,17 +7,16 @@ const fileUpload = require('express-fileupload');
 /*Rotas de postagens*/
 router.use(
     fileUpload({
-        limits: { fileSize: 24 * 1024 * 1024 * 1024 /* mais ou memnos 26MB */},
+        limits: { fileSize: 24 * 1024 * 1024 * 1024 /* mais ou memnos 26MB */ },
         abortOnLimit: true,
     })
 );
-
 
 //Pega todas as postagens 
 router.get('/', postController.getallposts);
 
 //Busca postagem com base em seu título
-router.get ('/procurar/:titulo', postController.getpoststitulo);
+router.get('/procurar/:titulo', postController.getpoststitulo);
 
 //Busca as postagens cadastradas por id
 router.get('/:pos_id', postController.getpostsid);
@@ -49,7 +48,7 @@ router.delete('/apagar-post/:pos_id', postController.delPostagem);
 router.patch('/editar-post/:pos_id', postController.patchpostagem);
 
 //Download do arquivo da Postagem
-router.get('/download/:arq_nome', postController.download)
+router.get('/baixar/:pos_id', postController.download);
 
 
 module.exports = router;
