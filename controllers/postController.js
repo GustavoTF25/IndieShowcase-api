@@ -154,6 +154,7 @@ exports.postGostei = (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) { return res.status(500).send({ error: error }); }
         conn.query('SELECT usu_id, pos_id, gos_valor FROM gos_gostei WHERE usu_id = ? AND pos_id = ?', [req.user.usu_id, req.params.pos_id], (error, results) => {
+            conn.release();
             if (error) {
                 conn.release();
                 return res.status(500).send({ error: error });
@@ -163,6 +164,7 @@ exports.postGostei = (req, res) => {
                 conn.query('UPDATE gos_gostei SET gos_valor = ? WHERE usu_id = ? AND pos_id = ?', [gostei, req.user.usu_id, req.params.pos_id], (error, results) => {
                     conn.release();
                     conn.query('update pos_postagem set pos_qtdgostei = ( select coalesce(sum(gos_valor),0) from gos_gostei where pos_postagem.pos_id = gos_gostei.pos_id ) where pos_id in (select pos_id from gos_gostei)')
+                    conn.release();
                     if (error) { return res.status(500).send({ error: error }); }
                     if (gostei === 0) {
                         return res.status(200).send({ mensagem: "Gostei removido com sucesso" });
