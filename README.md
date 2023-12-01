@@ -1,5 +1,5 @@
 # IndieShowcase-api
-Projeto Acadêmico da Plataforma de Conteúdo Indie "IndieShowcase"
+Projeto Acadêmico da Plataforma de Conteúdo Independente "IndieShowcase"
 
 Feito em JavaScript utilizando NodeJS e as dependências presentes no Package.json
 
