@@ -4,3 +4,5 @@ uploads/*
 usuarios/fotos/*
 !usuarios/fotos/foto.jpeg
 postagens/*
+LICENSE
+README.md
