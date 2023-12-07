@@ -50,5 +50,8 @@ router.patch('/editar-post/:pos_id', postController.patchpostagem);
 //Download do arquivo da Postagem
 router.get('/baixar/:pos_id', postController.download);
 
+//Pega o arquivo de uma postagem por id
+router.get('/arquivos/:pos_id', postController.getarquivo);
+
 
 module.exports = router;

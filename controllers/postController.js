@@ -47,13 +47,17 @@ exports.getpostsid = (req, res) => {
     });
 }
 
+
 exports.postpostagem = (req, res, next) => {
     mysql.getConnection((error, conn) => {
         if (error) { return res.status(401).send({ error: error, mensagem: "Erro na capa" }) }
         if (error) { return res.status(500).send({ error: mysql, mensagem: "erro ao inserir no banco" }) }
         const usuarioId = req.user.usu_id;
-        const arquivos = req.files;
+        const { arquivos } = req.files;
         const { titulo, descricao, tags, cat_id } = req.body;
+        if (!cat_id) {
+            return res.status(400).send({ mensagem: "A categoria de postagem é obrigatória" });
+        }
         if (!arquivos || Object.keys(arquivos).length === 0) {
             return res.status(400).send({ mensagem: "Nenhum arquivo enviado" });
         }
@@ -70,23 +74,30 @@ exports.postpostagem = (req, res, next) => {
                 } else {
                     if (!isImagem(capa)) { return res.status(400).send({ mensagem: "Esse arquivo deve uma imagem" }) }
                     caminhoCapa = `postagens/${postagemId}/` + capa.name;
+                    if (!fs.existsSync(`postagens/${postagemId}/`)) { fs.mkdirSync(`postagens/${postagemId}`, { recursive: true }); }
+                    capa.mv(caminhoCapa, (err) => {
+                        if (err) { return res.status(500).send({ error: err, message: "Falha no envio da capa" }); }
+                        conn.query(`UPDATE pos_postagem SET pos_capa = ? WHERE pos_id = ${postagemId}`, [caminhoCapa])
+                        conn.release()
+                    })
                 }
-                conn.query(`UPDATE pos_postagem SET pos_capa = ? WHERE pos_id = ${postagemId}`, [caminhoCapa])
-                const inserirArquivo = (arquivo) => {
-                    if (arquivo) {
-                        const caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
-                        if (!fs.existsSync(`postagens/${postagemId}/`)) { fs.mkdirSync(`postagens/${postagemId}`, { recursive: true }); }
+                if (arquivos) {
+                    const caminhoArquivo = `postagens/${postagemId}/` + arquivos.name;
+                    if (!fs.existsSync(`postagens/${postagemId}/`)) { fs.mkdirSync(`postagens/${postagemId}`, { recursive: true }); }
+                    arquivos.mv(caminhoArquivo);
+                    conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
+                        [arquivos.name, arquivos.mimetype, postagemId],
+                        (error) => {
+                            conn.release()
+                            if (error) {
 
-                        arquivo.mv(caminhoArquivo, (err) => {
-                            if (err) { return res.status(500).send({ error: err, message: "Falha no envio do arquivo" }); }
-                            conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
-                                [arquivo.name, arquivo.mimetype, postagemId],
-                                (error) => { if (error) { return res.status(500).send({ error: error, message: "Falha no envio do arquivo no servidor" }); } }
-                            );
-                        });
-                    }
-                };
-                Object.values(arquivos).forEach(inserirArquivo);
+                                return res.status(500).send({ error: error, message: "Falha no envio do arquivo no servidor" });
+                            }
+                        }
+                    );
+                } else {
+                    console.error("erro no arquivo")
+                }
 
                 const response = {
                     mensagem: "Postagem criada!",
@@ -98,7 +109,7 @@ exports.postpostagem = (req, res, next) => {
                         usu_id: usuarioId,
                         cat_id: cat_id,
                         capa: caminhoCapa,
-                        arquivos: Object.values(arquivos).map((arquivo) => arquivo.name),
+                        arquivos: arquivos.name
                     },
                 };
                 return res.status(201).send(response);
@@ -110,7 +121,6 @@ function isImagem(file) {
     let mimeType = mime.lookup(extensao)
     return mimeType && mimeType.startsWith('image');
 }
-
 
 exports.getComentarios = (req, res) => {
     mysql.getConnection((error, conn) => {
@@ -281,4 +291,24 @@ exports.download = (req, res) => {
 
         });
     })
+}
+
+exports.getarquivo = (req, res) => {
+    if (!req.params.pos_id) {
+        return res.status(400).send({ error: 'Parâmetro de id de postagem ausente' });
+    }
+    mysql.getConnection((error, conn) => {
+        if (error) { return res.status(500).send({ error: error }) };
+        conn.query(
+            `Select * FROM arq_arquivos where pos_id LIKE '%${req.params.pos_id}%'`,
+            (error, resultado, fields) => {
+                conn.release();
+                if (error) { return res.status(500).send({ error: error }) };
+                return res.status(200).send({
+                    response: resultado
+                });
+            }
+        );
+    });
+
 }
