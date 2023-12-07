@@ -71,6 +71,76 @@ exports.getpoststitulo = (req, res, next) => {
     );
 });
 }
+exports.postpostagem = (req, res, next) => {
+    mysql.getConnection((error, conn) => {
+        if (error) { return res.status(401).send({ error: error, mensagem: "Erro na capa" }) }
+        if (error) { return res.status(500).send({ error: mysql, mensagem: "erro ao inserir no banco" }) }
+        const usuarioId = req.user.usu_id;
+        const  { arquivos }  = req.files;
+        const { titulo, descricao, tags, cat_id } = req.body;
+        if (!arquivos || Object.keys(arquivos).length === 0) {
+            return res.status(400).send({ mensagem: "Nenhum arquivo enviado" });
+        }
+
+        conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)',
+            [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id],
+            (error, results) => {
+                conn.release();
+                const postagemId = results.insertId;
+                const { capa } = req.files;
+                let caminhoCapa = '';
+                if (!capa) {
+                    caminhoCapa = `postagens/template.png`;
+                } else {
+                    if (!isImagem(capa)) { return res.status(400).send({ mensagem: "Esse arquivo deve uma imagem" }) }
+                    caminhoCapa = `postagens/${postagemId}/` + capa.name;
+                    if(!fs.existsSync(`postagens/${postagemId}/`)){fs.mkdirSync(`postagens/${postagemId}` , {recursive: true}); }
+                    capa.mv(caminhoCapa, (err) => {
+                        if (err) { return res.status(500).send({ error: err, message: "Falha no envio da capa" }); }
+                        conn.query(`UPDATE pos_postagem SET pos_capa = ? WHERE pos_id = ${postagemId}`, [caminhoCapa])
+                        conn.release()
+                    })
+                }
+                if (arquivos) {
+                    const caminhoArquivo = `postagens/${postagemId}/` + arquivos.name;
+                    if (!fs.existsSync(`postagens/${postagemId}/`)) { fs.mkdirSync(`postagens/${postagemId}`, { recursive: true }); }
+                    arquivos.mv(caminhoArquivo);
+                conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
+                [arquivos.name, arquivos.mimetype, postagemId],
+                (error) => { 
+                    conn.release()
+                    if (error) { 
+                    
+                    return res.status(500).send({ error: error, message: "Falha no envio do arquivo no servidor" });
+                        }
+                    }
+                );
+                }else{
+                    console.error("erro no arquivo")
+                }
+                
+                const response = {
+                    mensagem: "Postagem criada!",
+                    postagemcriada: {
+                        pos_id: postagemId,
+                        titulo: titulo,
+                        descricao: descricao,
+                        tags: tags,
+                        usu_id: usuarioId,
+                        cat_id: cat_id,
+                        capa: caminhoCapa,
+                        arquivos: arquivos.name
+                    },
+                };
+                return res.status(201).send(response);
+            });
+    });
+} 
+function isImagem(file) {
+    let extensao = file.name.split('.').pop();
+    let mimeType = mime.lookup(extensao)
+    return mimeType && mimeType.startsWith('image');
+}
 
 exports.getpostsid = (req, res) => {
     mysql.getConnection((error, conn) => {
@@ -87,69 +157,7 @@ exports.getpostsid = (req, res) => {
 }
  
 
-exports.postpostagem = (req, res, next)  => {
-    mysql.getConnection((error, conn) => 
-    {  
-        if(error) {return res.status(401).send({error:error, mensagem:"Erro na capa"})}
-        if(error){return res.status(500).send({error: mysql, mensagem: "erro ao inserir no banco"})} 
-        const usuarioId = req.user.usu_id;
-        const arquivos = req.files;
-        const { titulo, descricao, tags, cat_id } = req.body;
-        if (!arquivos || Object.keys(arquivos).length === 0) { 
-            return res.status(400).send({ mensagem: "Nenhum arquivo enviado" });
-        }
-        conn.query('INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES (?,?,?,?,?)', 
-        [req.body.titulo, req.body.descricao, req.body.tags, usuarioId, req.body.cat_id], 
-        (error,results) => {
-            conn.release();    
-            const postagemId = results.insertId;
-            const { capa } = req.files;
-            let caminhoCapa = '';
-            if(!capa){
-                caminhoCapa = `postagens/foto.png`;
-            }else{
-                if(!isImagem(capa)){return res.status(400).send({mensagem: "Esse arquivo deve uma imagem"})} 
-                caminhoCapa = `postagens/${postagemId}/` + capa.name;
-            }
-            conn.query(`UPDATE pos_postagem SET pos_capa = ? WHERE pos_id = ${postagemId}`, [caminhoCapa])
-            const inserirArquivo = (arquivo) => {
-                if (arquivo) {
-                    const caminhoArquivo = `postagens/${postagemId}/` + arquivo.name;
-                    if (!fs.existsSync(`postagens/${postagemId}/`)) {fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });}
-                    arquivo.mv(caminhoArquivo, (err) => {
-                        if (err) {return res.status(500).send({ error: err, message: "Falha no envio do arquivo" });}
-                        conn.query('INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id) VALUES (?,?,?)',
-                        [arquivo.name, arquivo.mimetype, postagemId],
-                        (error) => {if (error) {return res.status(500).send({ error: error, message: "Falha no envio do arquivo no servidor" });}}
-                        );
-                    });
-                }
-            };
-            Object.values(arquivos).forEach(inserirArquivo);
-
-            const response = {
-                mensagem: "Postagem criada!",
-                postagemcriada: {
-                    pos_id: postagemId,
-                    titulo: titulo,
-                    descricao: descricao,
-                    tags: tags,
-                    usu_id: usuarioId,
-                    cat_id: cat_id,
-                    capa: caminhoCapa,
-                    capa: caminhoCapa,
-                    arquivos: Object.values(arquivos).map((arquivo) => arquivo.name),
-                },
-            };
-            return res.status(201).send(response);
-        });              
-    });
- }
-function isImagem(file){
-    let extensao = file.name.split('.').pop();
-    let mimeType = mime.lookup(extensao)
-    return mimeType && mimeType.startsWith('image');
-}
+ 
 
 exports.getComentarios = (req, res) => {
             mysql.getConnection((error, conn) => {
