@@ -58,6 +58,7 @@ exports.postusuarios = (req, res, next) => {
               if (!fs.existsSync(diretorio)) {
                 fs.mkdirSync(diretorio, { recursive: true });
                 if (error) { return res.status(500).send({ error: error }) }
+              }
                 return res.status(201).send({
                   mensagem: "Usuário cadastrado!",
                   usuariocriado: {
@@ -68,7 +69,7 @@ exports.postusuarios = (req, res, next) => {
                     diretorio: diretorio
                   }
                 });
-              }
+              
             });
         })
       }
