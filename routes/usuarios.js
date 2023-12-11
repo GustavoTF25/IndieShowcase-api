@@ -32,6 +32,8 @@ router.post('/nova-senha', userController.novasenha);
 //Adicionar nova foto de perfil
 router.post('/adicionar-nova-foto', decodetoken.decodifica, userController.fotousuario);
 
+//editar senha
+router.patch('/editarsenha', userController.patchsenha)
 
 
 module.exports = router;

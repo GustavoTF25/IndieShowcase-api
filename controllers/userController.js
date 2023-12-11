@@ -278,3 +278,19 @@ exports.novasenha = (req, res) => {
     });
   });
 };
+
+exports.patchsenha = (req, res, next) => {
+  mysql.getConnection((error, conn) => {
+    if (error) { return res.status(500).send({ error: error }) }
+    conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_id =?`,
+      [req.body.senha, req.body.usu_id],
+      (error, resultado, fields) => {
+        conn.release();
+        if (error) { return res.status(500).send({ error: error }) }
+        res.status(202).send({
+          mensagem: 'senha editada com sucesso'
+        });
+      }
+    )
+  });
+};
