@@ -2,10 +2,15 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const decodetoken = require('../middleware/decodetoken');
-
+const fileUpload = require('express-fileupload');
 
 /*Rotas de usuários*/
-
+router.use(
+    fileUpload({
+        limits: { fileSize: 24 * 1024 * 1024  /* mais ou memnos 26MB */ },
+        abortOnLimit: true,
+    })
+);
 //pega todos usuários cadastrados
 router.get('/', userController.getusuarios);
 
