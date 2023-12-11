@@ -138,7 +138,7 @@ exports.postComentario = (req, res) => {
         if (error) { return res.status(500).send({ error: error }) }
         if (error) { return res.status(500).send({ error: mysql }) }
         conn.query('INSERT INTO com_comentarios (usu_id, com_texto, pos_id) VALUES (?,?,?)',
-            [req.user.usu_id, req.body.texto, req.params.pos_id],
+            [req.user.usu_id, req.body.com_texto, req.params.pos_id],
             (error) => {
                 conn.release();
                 if (error) { return res.status(500).send({ error: error }) }
@@ -147,7 +147,7 @@ exports.postComentario = (req, res) => {
                     postagemcriada: {
                         usu_id: req.user.usu_id,
                         pos_id: req.params.pos_id,
-                        texto: req.body.texto,
+                        com_texto: req.body.com_texto,
                     }
                 }
                 return res.status(201).send(response);
