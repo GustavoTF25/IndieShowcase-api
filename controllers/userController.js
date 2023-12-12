@@ -279,7 +279,60 @@ exports.novasenha = (req, res) => {
   });
 };
 
+
 exports.patchsenha = (req, res, next) => {
+  // Recupera a senha atual criptografada do usuário no banco de dados
+  const query = 'SELECT usu_senha FROM usu_usuario WHERE usu_id = ?';
+
+  mysql.getConnection((error, conn) => {
+    if (error) {
+      return res.status(500).send({ error: error });
+    }
+
+    conn.query(query, [req.user.usu_id], (error, results, fields) => {
+      if (error) {
+        conn.release();
+        return res.status(500).send({ error: error });
+      }
+
+      // Verifica se a senha atual fornecida pelo usuário coincide com a senha no banco de dados
+      const senhaBanco = results[0].usu_senha; // Assumindo que haja apenas um resultado
+
+      bcrypt.compare(req.body.senha, senhaBanco, (err, result) => {
+        if (err || !result) {
+          conn.release();
+          return res.status(401).send({ mensagem: 'Senha atual incorreta' });
+        }
+
+        // Se a senha atual está correta, procede com a atualização da senha
+        bcrypt.hash(req.body.novaSenha, 10, (err, hash) => {
+          if (err) {
+            conn.release();
+            return res.status(500).send({ error: err });
+          }
+
+          conn.query(
+            'UPDATE usu_usuario SET usu_senha = ? WHERE usu_id = ?',
+            [hash, req.user.usu_id],
+            (error, resultado, fields) => {
+              conn.release();
+              if (error) {
+                return res.status(500).send({ error: error });
+              }
+
+              res.status(202).send({
+                mensagem: 'Senha editada com sucesso'
+              });
+            }
+          );
+        });
+      });
+    });
+  });
+};
+
+
+/*exports.patchsenha = (req, res, next) => {
   mysql.getConnection((error, conn) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_id =?`,
@@ -293,4 +346,4 @@ exports.patchsenha = (req, res, next) => {
       }
     )
   });
-};
+};*/
