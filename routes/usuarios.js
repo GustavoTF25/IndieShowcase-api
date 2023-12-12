@@ -33,7 +33,7 @@ router.post('/nova-senha', userController.novasenha);
 router.post('/adicionar-nova-foto', decodetoken.decodifica, userController.fotousuario);
 
 //editar senha
-router.patch('/editarsenha/:usu_id', userController.patchsenha)
+router.patch('/editarsenha/', decodetoken.decodifica, userController.patchsenha)
 
 
 module.exports = router;
