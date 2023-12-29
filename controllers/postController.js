@@ -203,7 +203,7 @@ exports.getComentariospost = (req, res) => {
     mysql.getConnection((error, conn) => {
         if (error) { return res.status(500).send({ error: error }) };
         conn.query(
-            `Select * FROM com_comentarios where pos_id LIKE '%${req.params.pos_id}%'`,
+            `Select * FROM com_comentarios where pos_id='${req.params.pos_id}'`,
             (error, resultado, fields) => {
                 conn.release();
                 if (error) { return res.status(500).send({ error: error }) };
