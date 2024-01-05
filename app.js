@@ -17,10 +17,11 @@ app.use((req, res, next) => {
 });
 app.use(morgan('dev'));
 //app.use('/postagens/uploads', express.static('uploads'))
-app.use('/postagens', express.static('postagens'));
+app.use('/postagens/', express.static('postagens'));
 app.use('/usuarios/', express.static('usuarios'))
 app.use(express.json());
 app.use(cors());
+
 // app.use(
 //     fileUpload({
 //         limits: { fileSize: 24 * 1024 * 1024 /* mais ou memnos 50MB */},

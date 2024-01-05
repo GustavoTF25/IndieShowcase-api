@@ -1,68 +1,82 @@
-const mysql = require('../mysql').pool;
+//const pg = require('../pg').pool;
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const transporter = require('../config/mailer');
 const fs = require('fs');
 const mime = require('mime-types');
+require('dotenv').config();
+const pg = require('../pg').pool;
+
 
 exports.getusuarios = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
-    if (error) { return res.status(500).send({ error: error }) };
-    conn.query(
-      'SELECT * FROM usu_usuario',
-      (error, resultado, fields) => {
-        conn.release();
-        if (error) { return res.status(500).send({ error: error }) }
-        return res.status(200).send({ response: resultado });
+  pg.connect((error, client, done) => {
+    if (error) { return res.status(500).send({ error: error, message: 'Erro na conexão com o banco de dados', errorDetails: error.message });    }
+     
+    client.query(`select * from usu_usuario`  , (error, result) => {
+      done();
+      if (error) {
+        done();
+        return res.status(500).send({ error: error, message: 'Erro na consulta ao banco de dados' });
       }
-    );
-  });
+        
+      return res.status(200).send({ response: result.rows });
+    });
+   
+    }) ;
+ 
 };
 
 exports.getusuid = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
+  pg.connect((error, conn, done) => {
     if (error) { return res.status(500).send({ error: error }) };
     conn.query(
-      'SELECT * FROM usu_usuario WHERE usu_id = ?',
+      'SELECT * FROM usu_usuario WHERE usu_id = $1',
       [req.params.usu_id],
       (error, resultado, fields) => {
-        conn.release();
+        done();
         if (error) { return res.status(500).send({ error: error }) }
-        return res.status(200).send({ response: resultado });
+        return res.status(200).send({ response: resultado.rows });
       }
     );
   });
 };
 
 exports.postusuarios = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
-    if (error) { return res.status(500).send({ error: error }) }
-    if (!req.body.nome || !req.body.email || !req.body.senha) {
-      conn.release();
+  if (!req.body.nome || !req.body.email || !req.body.senha) {
       return res.status(400).send({ mensagem: 'Todos os campos são obrigatórios' });
     }
-    conn.query('SELECT * FROM usu_usuario WHERE usu_email = ?', [req.body.email], (error, results) => {
-      if (error) { return res.status(500).send({ error: error }) }
-      if (results.length > 0) {
-        res.status(409).send({ mensagem: 'usuario já cadastrado!' });
+  pg.connect((error,conn ,done) => {
+    if (error) {
+      done(); 
+      return res.status(500).send({ error: error, message: 'erro na conexão com o banco' })
+    }
+    
+    conn.query('SELECT * FROM usu_usuario WHERE usu_email = $1', [req.body.email], (error, results) => {
+      if (error) { return res.status(500).send({ error: error , message: 'Email ja cadastrado'}) }
+      if (results.rows.length > 0) {
+        res.status(409).send({ mensagem: 'usuario já existe!' });
       } else {
         bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
           if (error) { return res.status(500).send({ error: errBcrypt }) }
           let imagemCaminho = 'usuarios/fotos/foto.jpeg'
-          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES (?,?,?,?);',
+          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES ($1,$2,$3,$4) RETURNING usu_id;',
             [req.body.nome, req.body.email, hash, imagemCaminho],
-            (error, results) => {
-              conn.release();
-              let userId = results.insertId;
+            (error, results, fields) => {
+              let userId = results.rows[0].usu_id;  
+              console.log("usuario id ",userId);            
               let diretorio = `usuarios/fotos/${userId}/`;
               if (!fs.existsSync(diretorio)) {
+                
                 fs.mkdirSync(diretorio, { recursive: true });
-                if (error) { return res.status(500).send({ error: error }) }
+                if (error) { 
+                  done();
+                  return res.status(500).send({ error: error , message : 'erro ao criar diretório'}) }
               }
+              done();
                 return res.status(201).send({
                   mensagem: "Usuário cadastrado!",
                   usuariocriado: {
-                    usu_id: results.insertId,
+                    usu_id: userId,
                     nome: req.body.nome,
                     email: req.body.email,
                     foto: imagemCaminho,
@@ -80,7 +94,7 @@ exports.postusuarios = (req, res, next) => {
 
 
 exports.fotousuario = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
+  pg.connect((error, conn,done) => {
     let usuarioId = req.user.usu_id;
     let { foto } = req.files;
     if (!isImagem(foto)) { return res.status(400).send({ mensagem: "Arquivo nao suportado" }) }
@@ -93,9 +107,9 @@ exports.fotousuario = (req, res, next) => {
     } else {
       imagemCaminho = 'usuarios/fotos/foto.png';
     }
-    conn.query(`UPDATE usu_usuario SET usu_foto = (?) WHERE usu_id = ${usuarioId}`,
+    conn.query(`UPDATE usu_usuario SET usu_foto = ($1) WHERE usu_id = ${usuarioId}`,
       [imagemCaminho], (error, results) => {
-        conn.release();
+        done();
         return res.status(201).send({
           mensagem: "Foto alterada com sucesso!",
           usuariocriado: {
@@ -113,38 +127,40 @@ function isImagem(file) {
 }
 
 exports.loginusuarios = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
+  pg.connect((error, conn,done) => {
     if (error) {
       return res.status(500).send({ error: error });
     }
     const { email, senha } = req.body;
     if (!email || !senha) {
-      conn.release();
+      done();
       return res.status(400).send({ mensagem: 'E-mail e senha são obrigatórios' });
     }
-    const query = 'SELECT * FROM usu_usuario WHERE usu_email = ?';
+    const query = 'SELECT * FROM usu_usuario WHERE usu_email = $1';
     conn.query(query, [email], (error, results) => {
-      conn.release();
+      done();
       if (error) {
         return res.status(500).send({ error: error });
       }
-      if (results.length < 1) {
+      if (results.rows.length < 1) {
         return res.status(404).send({ mensagem: 'Usuário ou e-mail não encontrado' });
       }
-      bcrypt.compare(senha, results[0].usu_senha, (err, result) => {
+      bcrypt.compare(senha, results.rows[0].usu_senha, (err, result) => {
         if (err) {
           return res.status(401).send({ mensagem: 'Senha incorreta' });
         }
         if (result) {
           const token = jwt.sign({
-            usu_id: results[0].usu_id,
-            usu_nome: results[0].usu_nome,
-            email: results[0].usu_email,
-            usu_foto: results[0].usu_foto
+            usu_id: results.rows[0].usu_id,
+            usu_nome: results.rows[0].usu_nome,
+            email: results.rows[0].usu_email,
+            usu_foto: results.rows[0].usu_foto
           }, process.env.JWT_KEY, {
             algorithm: 'HS512',
-            expiresIn: 10800,
+            expiresIn: 10800, //10800
           });
+          console.log("usario id",results.rows[0].usu_id);
+        
           return res.status(200).send({
             mensagem: 'Autenticado com sucesso',
             token: token,
@@ -158,7 +174,7 @@ exports.loginusuarios = (req, res, next) => {
 
 
 exports.patchusuarios = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
+  pg.getConnection((error, conn) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`UPDATE usu_usuario SET usu_nome = ? WHERE usu_id =?`,
       [req.body.nome, req.body.usu_id],
@@ -174,7 +190,7 @@ exports.patchusuarios = (req, res, next) => {
 };
 
 exports.deleteusuarios = (req, res, next) => {
-  mysql.getConnection((error, conn) => {
+  pg.getConnection((error, conn) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`DELETE FROM usu_usuario WHERE usu_id = ?`,
       [req.body.usu_id],
@@ -192,13 +208,13 @@ exports.deleteusuarios = (req, res, next) => {
 
 exports.esquecisenha = (req, res, results) => {
   const { email } = req.body;
-  mysql.getConnection((error, conn) => {
+  pg.connect((error, conn, done) => {
     if (error) { return res.status(500).send({ error: error }) }
-    const query = `SELECT * FROM usu_usuario WHERE usu_email = ?`;
+    const query = 'SELECT * FROM usu_usuario WHERE usu_email = $1';
     conn.query(query, [req.body.email], (error, results, fields) => {
-      conn.release();
+      done();
       if (error) { return res.status(500).send({ error: error }) };
-      if (results.length < 1) {
+      if (results.rows.length < 1) {
         return res.status(401).send({ mensagem: 'Usuário ou email não encontrado' });
       };
 
@@ -256,13 +272,13 @@ exports.novasenha = (req, res) => {
         return res.status(500).send({ message: 'nova senha', error: err });
       }
 
-      mysql.getConnection((error, conn) => {
+      pg.connect((error, conn, done) => {
         if (error) {
           return res.status(500).send({ message: 'Falha na conexão com o banco de dados', error: error });
         }
 
-        conn.query(`UPDATE usu_usuario SET usu_senha = ? WHERE usu_email = ?`, [hash, decoded.email], (error, results) => {
-          conn.release();
+        conn.query(`UPDATE usu_usuario SET usu_senha = $1 WHERE usu_email = $2`, [hash, decoded.email], (error, results) => {
+          done();
 
           if (error) {
             return res.status(500).send({ error: error });
@@ -282,21 +298,21 @@ exports.novasenha = (req, res) => {
 
 exports.patchsenha = (req, res, next) => {
   // Recupera a senha atual criptografada do usuário no banco de dados
-  const query = 'SELECT usu_senha FROM usu_usuario WHERE usu_id = ?';
+  const query = 'SELECT usu_senha FROM usu_usuario WHERE usu_id = $1';
 
-  mysql.getConnection((error, conn) => {
+  pg.connect((error, conn,done) => {
     if (error) {
       return res.status(500).send({ error: error });
     }
 
     conn.query(query, [req.user.usu_id], (error, results, fields) => {
       if (error) {
-        conn.release();
+        done();
         return res.status(500).send({ error: error });
       }
 
       // Verifica se a senha atual fornecida pelo usuário coincide com a senha no banco de dados
-      const senhaBanco = results[0].usu_senha; // Assumindo que haja apenas um resultado
+      const senhaBanco = results.rows[0].usu_senha; // Assumindo que haja apenas um resultado
 
       bcrypt.compare(req.body.senha, senhaBanco, (err, result) => {
         if (err || !result) {
@@ -307,15 +323,15 @@ exports.patchsenha = (req, res, next) => {
         // Se a senha atual está correta, procede com a atualização da senha
         bcrypt.hash(req.body.novaSenha, 10, (err, hash) => {
           if (err) {
-            conn.release();
+            done();
             return res.status(500).send({ error: err });
           }
 
           conn.query(
-            'UPDATE usu_usuario SET usu_senha = ? WHERE usu_id = ?',
+            'UPDATE usu_usuario SET usu_senha = $1 WHERE usu_id = $2',
             [hash, req.user.usu_id],
             (error, resultado, fields) => {
-              conn.release();
+              done();
               if (error) {
                 return res.status(500).send({ error: error });
               }
