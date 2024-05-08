@@ -4,7 +4,7 @@ const app = require('./app');
 require('dotenv').config();
 
 // Configuração do servidor HTTP
-const port = process.env.PORT || 8001;
+const port = process.env.PORT || 8000;
 const server = http.createServer(app);
 
 // Inicia o servidor

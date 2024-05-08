@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-
+require ('dotenv').config();
 let transporter = nodemailer.createTransport({
     host: "smtp-mail.outlook.com",
     port: 587,
@@ -9,5 +9,5 @@ let transporter = nodemailer.createTransport({
       pass: process.env.MAIL_PASSWORD
     }
   });
-
+ 
 module.exports = transporter;
