@@ -23,7 +23,7 @@ exports.getpoststitulo = (req, res, next) => {
     pg.connect((error, conn,done) => {
         if (error) { return res.status(500).send({ error: error }) };
         conn.query(
-            `Select * FROM pos_postagem where pos_nome LIKE '%${req.params.titulo}%'`,
+            `Select * FROM pos_postagem where pos_nome ILIKE '%${req.params.titulo}%'`,
             (error, resultado, fields) => {
                 done();
                 if (error) { return res.status(500).send({ error: error }) };
