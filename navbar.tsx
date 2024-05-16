@@ -118,8 +118,8 @@ export const Navbar = () => {
           <Box paddingRight={2} display={'flex'} color={'inherit'}>
             <MenuDrawer />
           </Box>
-          <Typography variant="h6" component={Button} onClick={() => navigate('/')} color={'white'}>
-            IndieShowCase
+          <Typography variant="h6" component={Button} onClick={() => navigate('/')} color={'white'} style={{fontFamily: 'monospace'}}>
+            IndieShowcase
           </Typography>
           <Box display={'flex'} justifyContent={'center'} sx={{ flexGrow: 1 }}>
             <SearchBar />
@@ -129,9 +129,9 @@ export const Navbar = () => {
               <Avatar
                 src={`http://localhost:8000/${usuFoto}`}
               />
-              <Button color='pedro' variant='text' onClick={() => navigate(`/perfil/${userID}`)}> {userName}  </Button>
-              <Button color='pedro' variant='text' onClick={() => navigate('/criarPostagem')}>Publicar</Button>
-              <Button variant='text' color='pedro' onClick={() => {
+              <Button style={{color: 'white'}} variant='text' onClick={() => navigate(`/perfil/${userID}`)}> {userName}  </Button>
+              <Button style={{color: 'white'}} variant='text' onClick={() => navigate('/criarPostagem')}>Publicar</Button>
+              <Button variant='text' style={{color:'white'}} onClick={() => {
                 localStorage.removeItem('token');
                 navigate('/');
                 window.location.reload();
@@ -139,8 +139,8 @@ export const Navbar = () => {
             </Box>
           ) : (
             <Box gap={1} display={'flex'}>
-              <Button color='pedro' variant='text' onClick={() => navigate('/cadastroUsuario')}>Cadastrar</Button>
-              <Button variant='text' color='pedro' onClick={() => navigate('/login')}>Login</Button>
+              <Button style={{color: 'white'}} variant='text' onClick={() => navigate('/cadastroUsuario')}>Cadastrar</Button>
+              <Button variant='text' style={{color: 'white'}} onClick={() => navigate('/login')}>Login</Button>
             </Box>
           )}
         </Toolbar>
