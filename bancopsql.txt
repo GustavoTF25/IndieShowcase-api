@@ -1,4 +1,5 @@
 ---- criando banco em postreges  ----
+\! chcp 1252;
 
 CREATE DATABASE indiedb;
 
@@ -13,6 +14,7 @@ CREATE TABLE usu_usuario (
 	usu_senha VARCHAR(512) NOT NULL,
 	usu_status usu_status default 'ON',
 	usu_admin usu_admin default 'N',
+	usu_idade date not null default current_timestamp,
 	usu_totalpublicacao int DEFAULT 0,
 	usu_totalfavorito int DEFAULT 0,
 	usu_datacriado date default current_timestamp,
@@ -68,3 +70,5 @@ CREATE TABLE gos_gostei (
 );
 ALTER TABLE gos_gostei ADD FOREIGN KEY(usu_id) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE gos_gostei ADD FOREIGN KEY(pos_id) REFERENCES pos_postagem(pos_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+INSERT INTO cat_categoria VALUES(0,'Jogos'),(1,'Quadrinhos'),(2,'ilustração'),(3,'Animações'),(4,'Musica/Audio'),(5,'WebFiction'),(6,'Software');

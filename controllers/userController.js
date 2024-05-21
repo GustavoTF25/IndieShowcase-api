@@ -59,8 +59,8 @@ exports.postusuarios = (req, res, next) => {
         bcrypt.hash(req.body.senha, 10, (errBcrypt, hash) => {
           if (error) { return res.status(500).send({ error: errBcrypt }) }
           let imagemCaminho = 'usuarios/fotos/foto.jpeg'
-          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha, usu_foto) VALUES ($1,$2,$3,$4) RETURNING usu_id;',
-            [req.body.nome, req.body.email, hash, imagemCaminho],
+          conn.query('INSERT INTO usu_usuario (usu_nome, usu_email, usu_senha,usu_idade, usu_foto) VALUES ($1,$2,$3,$4,$5) RETURNING usu_id;',
+            [req.body.nome, req.body.email, hash,req.body.idade, imagemCaminho],
             (error, results, fields) => {
               let userId = results.rows[0].usu_id;  
               console.log("usuario id ",userId);            
@@ -79,6 +79,7 @@ exports.postusuarios = (req, res, next) => {
                     usu_id: userId,
                     nome: req.body.nome,
                     email: req.body.email,
+                    idade: req.body.idade,
                     foto: imagemCaminho,
                     diretorio: diretorio
                   }
@@ -157,7 +158,8 @@ exports.loginusuarios = (req, res, next) => {
             usu_foto: results.rows[0].usu_foto
           }, process.env.JWT_KEY, {
             algorithm: 'HS512',
-            expiresIn: 10800, //10800
+            expiresIn: 14400, //10800
+            
           });
           console.log("usario id",results.rows[0].usu_id);
         
