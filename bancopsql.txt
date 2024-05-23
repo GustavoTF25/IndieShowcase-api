@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ---- criando banco em postreges  ----
 \! chcp 1252;
 
@@ -148,3 +149,79 @@ ALTER TABLE gos_gostei ADD FOREIGN KEY(pos_id) REFERENCES pos_postagem(pos_id) O
 
 INSERT INTO cat_categoria VALUES(0,'Jogos'),(1,'Quadrinhos'),(2,'ilustração'),(3,'Animações'),(4,'Musica/Audio'),(5,'WebFiction'),(6,'Software');
 >>>>>>> 142c1a0accc58d41fe4e0e0421da24ae4a07bee2
+=======
+---- criando banco em postreges  ----
+\! chcp 1252;
+
+CREATE DATABASE indiedb;
+
+CREATE TYPE usu_status AS ENUM ('ON','OFF');
+
+CREATE TYPE usu_admin AS ENUM ('S','N');
+
+CREATE TABLE usu_usuario (
+	usu_id BIGSERIAL PRIMARY KEY,
+	usu_nome VARCHAR(100) NOT NULL, 
+	usu_email VARCHAR(100) NOT NULL UNIQUE,
+	usu_senha VARCHAR(512) NOT NULL,
+	usu_status usu_status default 'ON',
+	usu_admin usu_admin default 'N',
+	usu_idade date not null default current_timestamp,
+	usu_totalpublicacao int DEFAULT 0,
+	usu_totalfavorito int DEFAULT 0,
+	usu_datacriado date default current_timestamp,
+	usu_foto varchar(512) default 'usuarios/fotos/foto.jpeg'
+);
+CREATE TABLE cat_categoria (
+	cat_id SMALLSERIAL PRIMARY KEY,
+	cat_nome VARCHAR(45) NOT NULL
+);
+
+CREATE TYPE pos_ativo AS ENUM ('S','N');
+
+CREATE TABLE pos_postagem(
+	pos_id BIGSERIAL primary key,
+	pos_nome VARCHAR(100) not null,
+	pos_descricao VARCHAR (200) not null,
+	pos_ativo pos_ativo DEFAULT 'S', 
+	pos_tags VARCHAR(30) DEFAULT 'default tag',
+	pos_qtdgostei INTEGER DEFAULT 0,
+	pos_data DATE DEFAULT current_timestamp,
+	usu_id bigint,
+	cat_id smallint,
+	pos_capa VARCHAR(500) NULL DEFAULT NULL
+);
+ALTER TABLE pos_postagem ADD FOREIGN KEY (usu_id) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE pos_postagem ADD FOREIGN KEY (cat_id) REFERENCES cat_categoria(cat_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE arq_arquivos(
+	arq_id BIGSERIAL PRIMARY KEY,
+	arq_nome VARCHAR(255) NOT NULL, 
+	arq_extensao VARCHAR(100) NOT NULL,
+	arq_data DATE DEFAULT current_timestamp,
+	arq_caminho VARCHAR(512) DEFAULT NULL,
+	pos_id BIGINT
+);
+ALTER TABLE arq_arquivos ADD FOREIGN KEY(pos_id) REFERENCES pos_postagem(pos_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE com_comentarios (
+	com_comentarios BIGSERIAL PRIMARY KEY,
+	com_texto VARCHAR(200) NOT NULL,
+	usu_id BIGINT NOT NULL,
+	pos_id BIGINT NOT NULL,
+	com_data DATE DEFAULT current_timestamp
+);
+ALTER TABLE com_comentarios ADD FOREIGN KEY (usu_id) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE com_comentarios ADD FOREIGN KEY (pos_id) REFERENCES pos_postagem(pos_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE gos_gostei (
+	gos_id BIGSERIAL PRIMARY KEY,
+	usu_id BIGINT NOT NULL,
+	pos_id BIGINT NOT NULL,
+	gos_valor SMALLINT DEFAULT 1
+);
+ALTER TABLE gos_gostei ADD FOREIGN KEY(usu_id) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE gos_gostei ADD FOREIGN KEY(pos_id) REFERENCES pos_postagem(pos_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+INSERT INTO cat_categoria VALUES(0,'Jogos'),(1,'Quadrinhos'),(2,'ilustração'),(3,'Animações'),(4,'Musica/Audio'),(5,'WebFiction'),(6,'Software');
+>>>>>>> 0cf6152a5b34a24f6197e9c60025c84bbfd22a4c
