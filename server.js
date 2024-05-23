@@ -11,7 +11,7 @@ const server = http.createServer(app);
 server.listen(port, () => {
     console.log(`Servidor rodando na porta ${port} no processo ${process.pid}`);
 });
-//const ip = '192.168.1.9'
+//const ip = 'seuIP'
 //server.listen(port, ip ,() => {
 //        console.log(`Servidor rodando na porta ${ip}:${port} no processo ${process.pid}`);
 //});
