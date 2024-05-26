@@ -22,7 +22,7 @@ router.post('/cadastro', userController.postusuarios);
 router.post('/login', userController.loginusuarios);
 
 //editar e deletar usuário
-router.patch('/editar', userController.patchusuarios);
+router.patch('/editar', userController.patchnome);
 router.delete('/deletar', userController.deleteusuarios);
 router.patch('/biografia', userController.patchbio);
 

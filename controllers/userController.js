@@ -175,8 +175,7 @@ exports.loginusuarios = (req, res, next) => {
 };
 
 
-exports.patchusuarios = (req, res, next) => {
-   
+exports.patchnome = (req, res, next) => {
   pg.connect((error, conn,done) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`UPDATE usu_usuario SET usu_nome = $1 WHERE usu_id = $2`,
@@ -191,6 +190,7 @@ exports.patchusuarios = (req, res, next) => {
     )
   });
 };
+
 
 exports.deleteusuarios = (req, res, next) => {
   pg.connect((error, conn,done) => {
