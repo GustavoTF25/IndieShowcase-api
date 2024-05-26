@@ -9,9 +9,9 @@ const server = http.createServer(app);
 
 // Inicia o servidor
 server.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port} no processo ${process.pid}`);
+   console.log(`Servidor rodando na porta ${port} no processo ${process.pid}`);
 });
-//const ip = 'seuIP'
-//server.listen(port, ip ,() => {
-//        console.log(`Servidor rodando na porta ${ip}:${port} no processo ${process.pid}`);
-//});
+// const ip = ''
+// server.listen(port, ip ,() => {
+//         console.log(`Servidor rodando na porta ${ip}:${port} no processo ${process.pid}`);
+// });

@@ -176,12 +176,12 @@ exports.loginusuarios = (req, res, next) => {
 
 
 exports.patchusuarios = (req, res, next) => {
-  pg.getConnection((error, conn) => {
+  pg.connect((error, conn,done) => {
     if (error) { return res.status(500).send({ error: error }) }
-    conn.query(`UPDATE usu_usuario SET usu_nome = ? WHERE usu_id =?`,
+    conn.query(`UPDATE usu_usuario SET usu_nome = $1 WHERE usu_id = $2`,
       [req.body.nome, req.body.usu_id],
       (error, resultado, fields) => {
-        conn.release();
+        done();
         if (error) { return res.status(500).send({ error: error }) }
         res.status(202).send({
           mensagem: 'Info editada com sucesso'
@@ -192,12 +192,12 @@ exports.patchusuarios = (req, res, next) => {
 };
 
 exports.deleteusuarios = (req, res, next) => {
-  pg.getConnection((error, conn) => {
+  pg.connect((error, conn,done) => {
     if (error) { return res.status(500).send({ error: error }) }
-    conn.query(`DELETE FROM usu_usuario WHERE usu_id = ?`,
+    conn.query(`DELETE FROM usu_usuario WHERE usu_id = $1`,
       [req.body.usu_id],
       (error, resultado, fields) => {
-        conn.release();
+        done();
         if (error) { return res.status(500).send({ error: error }) }
         res.status(202).send({
           mensagem: 'Usuário deletado'

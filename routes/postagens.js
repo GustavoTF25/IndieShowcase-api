@@ -7,14 +7,16 @@ const fileUpload = require('express-fileupload');
 /*Rotas de postagens*/
 router.use(
     fileUpload({
-        limits: { fileSize: 24 * 1024 * 1024 * 1024 /* mais ou memnos 26MB */ },
-        abortOnLimit: true,
+      limits: { fileSize: 8 * 1024 * 1024 * 1024, // 8 GB
+               abortOnLimit: true,
+      },
     })
-);
+  );
 
 //Pega todas as postagens 
 router.get('/', postController.getallposts);
-
+//pega postagens do usuairo
+router.get('/detalhe/:usu_id', postController.getusuariopostagens);
 //Busca postagem com base em seu título
 router.get('/procurar/:titulo', postController.getpoststitulo);
 

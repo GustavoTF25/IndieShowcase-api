@@ -32,6 +32,19 @@ exports.getpoststitulo = (req, res, next) => {
         );
     });
 }
+exports.getusuariopostagens = ( req, res, next) =>{
+    pg.connect((error, conn, done) => {
+        if (error){return res.status(500).send({ error : error }) };
+        conn.query(
+            `Select * From pos_postagem where usu_id = ${req.params.usu_id}`,(error,resultado,fields) => {
+                done();
+                if  ( error ) { return res.status(500).send({error:error})}
+                console.log("esta no detalhe")
+                return res.status(200).send({ response: resultado.rows})
+            }
+        )
+    })
+}
 
 exports.getpostsid = (req, res) => {
     pg.connect((error, conn,done) => {
