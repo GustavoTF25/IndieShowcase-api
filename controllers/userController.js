@@ -208,6 +208,22 @@ exports.deleteusuarios = (req, res, next) => {
 
 };
 
+exports.patchbio = (req, res, next) => {
+  pg.connect((error, conn, done) => {
+    if (error) { return res.status(500).send({ error: error }) }
+    conn.query(`UPDATE usu_usuario SET usu_bio = $1 WHERE usu_id =$2`,
+      [req.body.nome, req.body.usu_id],
+      (error, resultado, fields) => {
+        done();
+        if (error) { return res.status(500).send({ error: error }) }
+        res.status(202).send({
+          mensagem: 'Info editada com sucesso'
+        });
+      }
+    )
+  });
+  } 
+  s
 exports.esquecisenha = (req, res, results) => {
   const { email } = req.body;
   pg.connect((error, conn, done) => {

@@ -24,6 +24,7 @@ router.post('/login', userController.loginusuarios);
 //editar e deletar usuário
 router.patch('/editar', userController.patchusuarios);
 router.delete('/deletar', userController.deleteusuarios);
+router.patch('/biografia', userController.patchbio);
 
 //Alteração de senha 
 router.post('/esqueci-senha', userController.esquecisenha);
