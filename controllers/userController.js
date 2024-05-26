@@ -193,7 +193,7 @@ exports.patchbio = (req, res, next) => {
   pg.connect((error, conn, done) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`UPDATE usu_usuario SET usu_bio = $1 WHERE usu_id =$2`,
-      [req.body.nome, req.body.usu_id],
+      [req.body.biografia, req.body.usu_id],
       (error, resultado, fields) => {
         done();
         if (error) { return res.status(500).send({ error: error }) }
