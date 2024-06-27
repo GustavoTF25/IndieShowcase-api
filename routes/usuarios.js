@@ -16,7 +16,7 @@ router.get('/', userController.getusuarios);
 
 //pega algum usuário pelo seu id
 router.get('/:usu_id', userController.getusuid);
-
+router.get('/perfil/:usu_id', decodetoken.decodifica, userController.getusuidperfil)
 //cadastro e login
 router.post('/cadastro', userController.postusuarios);
 router.post('/login', userController.loginusuarios);
@@ -36,5 +36,11 @@ router.post('/adicionar-nova-foto', decodetoken.decodifica, userController.fotou
 //editar senha
 router.patch('/editarsenha', decodetoken.decodifica, userController.patchsenha)
 
+//seguir usuario
+router.post('/seguir/:usu_id', decodetoken.decodifica, userController.seguirusuario);
+//checar se segue
+router.get('/segue/:usu_id',decodetoken.decodifica, userController.segue);
+//feed de usuario
+router.get('/seguiu/:usu_id', decodetoken.decodifica, userController.seguiu)
 
 module.exports = router;

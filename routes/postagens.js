@@ -15,8 +15,11 @@ router.use(
 
 //Pega todas as postagens 
 router.get('/', postController.getallposts);
+
 //pega postagens do usuairo
 router.get('/detalhe/:usu_id', postController.getusuariopostagens);
+router.get('/detalhe/perfil/:usu_id', decodetoken.decodifica, postController.getusuariopostagensperfil)
+
 //Busca postagem com base em seu título
 router.get('/procurar/:titulo', postController.getpoststitulo);
 
