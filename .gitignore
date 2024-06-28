@@ -6,3 +6,7 @@ usuarios/fotos/*
 postagens/*
 LICENSE
 README.md
+controllers/postCont.txt
+controllers/userCont.txt
+routes/post.txt
+routes/usu.txt
