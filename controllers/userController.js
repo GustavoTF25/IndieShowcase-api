@@ -238,8 +238,25 @@ exports.patchbio = (req, res, next) => {
   });
   } 
 
+exports.patchbio = (req, res, next) => {
+  pg.connect((error, conn, done) => {
+    if (error) { return res.status(500).send({ error: error }) }
+    conn.query(`UPDATE usu_usuario SET usu_bio = $1 WHERE usu_id =$2`,
+      [req.body.biografia, req.body.usu_id],
+      (error, resultado, fields) => {
+        done();
+        if (error) { return res.status(500).send({ error: error }) }
+        res.status(202).send({
+          mensagem: 'Info editada com sucesso'
+        });
+      }
+    )
+  });
+  } 
+
 
 exports.deleteusuarios = (req, res, next) => {
+  pg.connect((error, conn, done) => {
   pg.connect((error, conn, done) => {
     if (error) { return res.status(500).send({ error: error }) }
     conn.query(`DELETE FROM usu_usuario WHERE usu_id = $1`,
@@ -255,6 +272,7 @@ exports.deleteusuarios = (req, res, next) => {
   });
 
 };
+
 
 exports.esquecisenha = (req, res, results) => {
   const { email } = req.body;
@@ -398,6 +416,147 @@ exports.patchsenha = (req, res, next) => {
 };
 
 
+
+exports.seguirusuario = (req, res, next) => {
+  const seguidor_id = req.user.usu_id;
+  const seguindo_id = req.params.usu_id;
+  let seguirNum = 0;
+
+  if (!seguidor_id || !seguindo_id) {
+    return res.status(400).send({ error: 'IDs de seguidor e seguido são necessários' });
+  }
+
+  pg.connect((error, conn, done) => {
+    if (error) {
+      return res.status(500).send({ error: error.message });
+    }
+
+    // Verificar se a relação já existe
+    conn.query(
+      'SELECT seg_valor FROM seg_seguir WHERE seg_seguidor = $1 AND seg_seguindo = $2',
+      [seguidor_id, seguindo_id],
+      (error, result) => {
+        if (error) {
+          done();
+          return res.status(500).send({ error: error.message });
+        }
+
+        if (result.rows.length > 0) {
+          seguirNum = result.rows[0].seg_valor === 0 ? 1 : 0;
+          // Atualizar a relação existente
+          conn.query(
+            'UPDATE seg_seguir SET seg_valor = $1 WHERE seg_seguidor = $2 AND seg_seguindo = $3',
+            [seguirNum, seguidor_id, seguindo_id],
+            (error, result) => {
+              conn.query('update usu_usuario set usu_totalseguidores = ( select coalesce(sum(seg_valor),0) from seg_seguir where seg_seguir.seg_seguindo = usu_usuario.usu_id ) where usu_id in (select usu_id from seg_seguir)')
+              
+              if (error) {
+                done()
+                return res.status(500).send({ error: error.message });
+              }
+
+              if (seguirNum === 0) {
+                conn.query('update usu_usuario set usu_totalseguidores = ( select coalesce(sum(seg_valor),0) from seg_seguir where seg_seguir.seg_seguindo = usu_usuario.usu_id ) where usu_id in (select usu_id from seg_seguir)')
+                
+                if (error) {
+                  done();
+                  return res.status(500).send({ error: error.message });
+                }
+                done()
+                return res.status(200).send({ mensagem: "Deixou de seguir o usuário com sucesso" });
+               
+              } else {
+                conn.query('update usu_usuario set usu_totalseguidores = ( select coalesce(sum(seg_valor),0) from seg_seguir where seg_seguir.seg_seguindo = usu_usuario.usu_id ) where usu_id in (select usu_id from seg_seguir)')
+                if (error) {
+                  done()
+                  return res.status(500).send({ error: error.message });
+                }
+                done()
+                return res.status(201).send({ mensagem: "Usuário seguido com sucesso" });
+                
+              }
+             
+            }
+            
+          );
+        } else {
+          seguirNum = 1;
+          // Inserir nova relação
+          conn.query(
+            'INSERT INTO seg_seguir (seg_seguidor, seg_seguindo, seg_valor) VALUES ($1, $2, $3)',
+            [seguidor_id, seguindo_id, seguirNum],
+            (error, result) => {
+             
+            conn.query('update usu_usuario set usu_totalseguidores = ( select coalesce(sum(seg_valor),0) from seg_seguir where seg_seguir.seg_seguindo = usu_usuario.usu_id ) where usu_id in (select usu_id from seg_seguir)')
+            done();
+              if (error) {
+                return res.status(500).send({ error: error.message });
+              }
+
+              return res.status(201).send({ mensagem: "Usuário seguido com sucesso" });
+            }
+          );
+        }
+      }
+    );
+  });
+};
+
+exports.seguiu = (req, res, next) => {
+  const seguidor_id = req.user.usu_id;
+  
+  pg.connect((error, conn, done) => {
+    if (error) {
+      done(); // Libera a conexão em caso de erro
+      return res.status(500).send({ error: error.message });
+    }
+
+    conn.query(
+      `SELECT seg_seguindo 
+       FROM seg_seguir 
+       JOIN usu_usuario u ON u.usu_id = seg_seguindo  
+       WHERE seg_seguidor = $1 AND seg_valor > 0`,
+      [seguidor_id],
+      (error, result) => {
+        // Sempre chame done() após completar o processamento da query
+        done();
+        if (error) {
+          done(); // Em caso de erro adicional, garanta a liberação da conexão
+          return res.status(500).send({ error: error.message });
+        }
+
+        return res.status(200).send({ response: result.rows });
+      }
+    );
+  });
+};
+
+
+exports.segue = (req, res, next) => {
+  const seguidor = req.user.usu_id
+  const seguindo = req.params.usu_id;
+  pg.connect((error, conn, done) => {
+    if(error){
+      done()
+      return res.status(500).send({error:error.message})
+    }
+    conn.query(
+      `SELECT seg_valor 
+      FROM seg_seguir 
+      WHERE seg_seguidor = $1 
+      AND seg_seguindo = $2`,
+      [seguidor,seguindo],(error, result)=>{
+        if (error){
+          done()
+          return res.status(500).send({error: error.message});
+        }
+        done()
+        return res.status(200).send({response:result.rows})
+      }
+    )
+  })
+
+}
 
 exports.seguirusuario = (req, res, next) => {
   const seguidor_id = req.user.usu_id;

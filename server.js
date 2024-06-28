@@ -14,11 +14,11 @@ server1.listen(port, ip1 ,() => {
         console.log(`Servidor rodando na porta ${ip1}:${port} no processo ${process.pid}`);
 });
 
-const server2 = http.createServer(app);
-const ip2 = '26.144.73.80'
-server2.listen(port, ip2 ,() => {
-        console.log(`Servidor rodando na porta ${ip2}:${port} no processo ${process.pid}`);
-});
+//const server2 = http.createServer(app);
+//const ip2 = '26.144.73.80'
+//server2.listen(port, ip2 ,() => {
+//        console.log(`Servidor rodando na porta ${ip2}:${port} no processo ${process.pid}`);
+//});
 
 
 //console.log(os.networkInterfaces())

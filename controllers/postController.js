@@ -57,8 +57,6 @@ exports.getusuariopostagensperfil = ( req, res, next) =>{
             `Select * From pos_postagem where usu_id = ${usu_id} ORDER BY pos_data DESC`,(error,resultado,fields) => {
                 done();
                 if  ( error ) { return res.status(500).send({error:error})}
-                 
-                   
                 // console.log("esta no detalhe")
                 return res.status(200).send({ response: resultado.rows})
             }
@@ -210,14 +208,147 @@ function isImagem(file) {
 }
 
 /*exports.postpostagem = (req, res, next) => {
+    if (!req.user || !req.user.usu_id) {
+        return res.status(500).send({ message: "Não logado" });
+    }
+
+    pg.connect((error, conn, done) => {
+        if (error) {
+            done();
+            return res.status(500).send({ message: "Falha na conexão com o banco de dados", error });
+        }
+
+        const usuarioId = req.user.usu_id;
+        const { arquivos, capa } = req.files || {};
+        const { titulo, descricao, tags, cat_id } = req.body;
+
+        // Verifica se não há arquivo e não há capa
+        if (!arquivos && !capa) {
+            done();
+            return res.status(400).send({ mensagem: "Nenhum arquivo ou capa enviados" });
+        }
+        if (!arquivos && capa) {
+            done();
+            return res.status(400).send({ mensagem: "Nenhum arquivo ou capa enviados" });
+        }
+
+        const queryText = `INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) 
+                           VALUES ($1, $2, $3, $4, $5) RETURNING pos_id`;
+
+        conn.query(queryText, [titulo, descricao, tags, usuarioId, cat_id], (error, results) => {
+            if (error) {
+                done();
+                return res.status(500).send({ message: "Falha ao criar a postagem", error });
+            }
+
+            const postagemId = results.rows[0].pos_id;
+            let caminhoCapa = 'postagens/template.png';
+
+            // Processa a capa se houver
+            if (capa) {
+                if (!isImagem(capa)) {
+                    done();
+                    return res.status(400).send({ mensagem: "A capa deve ser uma imagem" });
+                }
+
+                caminhoCapa = `postagens/${postagemId}/${capa.name}`;
+                if (!fs.existsSync(`postagens/${postagemId}/`)) {
+                    fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });
+                }
+
+                capa.mv(caminhoCapa, (err) => {
+                    if (err) {
+                        done();
+                        return res.status(500).send({ message: "Falha no envio da capa", error: err });
+                    }
+
+                    conn.query(`UPDATE pos_postagem SET pos_capa = $1 WHERE pos_id = $2`, [caminhoCapa, postagemId], (error) => {
+                        if (error) {
+                            done();
+                            return res.status(500).send({ message: "Falha ao atualizar o caminho da capa no banco de dados", error });
+                        }
+                    });
+                });
+            }else{
+                caminhoCapa = 'postagens/template.png';
+                if (!fs.existsSync(`postagens/${postagemId}/`)) {
+                    fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });
+                }
+                    conn.query(`UPDATE pos_postagem SET pos_capa = $1 WHERE pos_id = $2`, [caminhoCapa, postagemId], (error) => {
+                        if (error) {
+                            done();
+                            return res.status(500).send({ message: "Falha ao atualizar o caminho da capa no banco de dados", error });
+                        }
+                    
+                });
+            }
+
+            // Processa o arquivo se houver
+            if (arquivos) {
+                const caminhoArquivo = `postagens/${postagemId}/${arquivos.name}`;
+                if (!fs.existsSync(`postagens/${postagemId}/`)) {
+                    fs.mkdirSync(`postagens/${postagemId}`, { recursive: true });
+                }
+
+                arquivos.mv(caminhoArquivo, (err) => {
+                    if (err) {
+                        done();
+                        return res.status(500).send({ message: "Falha no envio do arquivo", error: err });
+                    }
+
+                    conn.query(
+                        'INSERT INTO arq_arquivos (arq_nome, arq_extensao, pos_id, arq_caminho) VALUES ($1, $2, $3, $4)',
+                        [arquivos.name, arquivos.mimetype, postagemId, caminhoArquivo],
+                        (error) => {
+                            if (error) {
+                                done();
+                                return res.status(500).send({ message: "Falha ao salvar o arquivo no banco de dados", error });
+                            }
+                        }
+                    );
+                });
+            }
+
+            const response = {
+                mensagem: "Postagem criada!",
+                postagemcriada: {
+                    pos_id: postagemId,
+                    titulo: titulo,
+                    descricao: descricao,
+                    tags: tags,
+                    usu_id: usuarioId,
+                    cat_id: cat_id,
+                    capa: caminhoCapa,
+                    arquivos: arquivos ? arquivos.name : null
+                }
+            };
+
+            done();
+            return res.status(201).send(response);
+        });
+    });
+};
+
+function isImagem(file) {
+    const extensao = file.name.split('.').pop();
+    const mimeType = mime.lookup(extensao);
+    return mimeType && mimeType.startsWith('image');
+}
+
+/*exports.postpostagem = (req, res, next) => {
     if(!req.user.usu_id){ 
         return res.status(500).send({message:"não logado"})
     }else{   
     pg.connect((error, conn,done) => {
         const usuarioId = req.user.usu_id;
         const { arquivos, capa } = req.files || {};
+        //const { arquivos, capa } = req.files || {};
         //const { arquivos }  = req.files;
         const { titulo, descricao, tags, cat_id } = req.body;  
+        if (!arquivos && !capa) {
+            console.log(arquivos, capa)
+            done();
+            return res.status(400).send({ mensagem: "Nenhum arquivo ou capa enviados" });
         if (!arquivos && !capa) {
             console.log(arquivos, capa)
             done();
@@ -226,10 +357,13 @@ function isImagem(file) {
 
 
     
+
+
+    
         conn.query(`INSERT INTO pos_postagem (pos_nome, pos_descricao, pos_tags, usu_id, cat_id) VALUES ('${req.body.titulo}',' ${req.body.descricao} ','${req.body.tags}',' ${usuarioId}', '${req.body.cat_id}' ) RETURNING pos_id` ,
             (error, results) => {
                 const postagemId = results.rows[0].pos_id;
-                //const { capa } = req.files;
+                ////const { capa } = req.files;
                 let caminhoCapa = '';
                 if (!capa) {
                     caminhoCapa = `postagens/template.png`;
@@ -285,7 +419,7 @@ function isImagem(file) {
     let extensao = file.name.split('.').pop();
     let mimeType = mime.lookup(extensao)
     return mimeType && mimeType.startsWith('image');
-}*/
+}*/*/
 
 exports.getComentarios = (req, res) => {
     pg.connect((error, conn,done) => {
