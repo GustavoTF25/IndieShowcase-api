@@ -270,8 +270,8 @@ exports.deleteusuarios = (req, res, next) => {
       }
     )
   });
-
-};
+}
+)}
 
 
 exports.esquecisenha = (req, res, results) => {
@@ -696,5 +696,4 @@ exports.segue = (req, res, next) => {
       }
     )
   })
-
 }
