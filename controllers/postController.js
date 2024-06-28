@@ -419,7 +419,7 @@ function isImagem(file) {
     let extensao = file.name.split('.').pop();
     let mimeType = mime.lookup(extensao)
     return mimeType && mimeType.startsWith('image');
-}*/*/
+}*/
 
 exports.getComentarios = (req, res) => {
     pg.connect((error, conn,done) => {
