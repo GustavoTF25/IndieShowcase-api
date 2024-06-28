@@ -1,6 +1,8 @@
 ---- criando banco em postreges  ----
-\! chcp 1252 \g
+\! chcp 1252
+ 
 
+--- . ---
 CREATE DATABASE indiedb;
 
 CREATE TYPE usu_status AS ENUM ('ON','OFF');
@@ -17,10 +19,12 @@ CREATE TABLE usu_usuario (
 	usu_idade date not null default current_timestamp,
 	usu_totalpublicacao int DEFAULT 0,
 	usu_totalfavorito int DEFAULT 0,
+	usu_totalseguidores int default 0,
 	usu_datacriado date default current_timestamp,
 	usu_foto varchar(512) default 'usuarios/fotos/foto.jpeg'
 	usu_bio VARCHAR(192) null default 'sua bio';
 );
+
 CREATE TABLE cat_categoria (
 	cat_id SMALLSERIAL PRIMARY KEY,
 	cat_nome VARCHAR(45) NOT NULL
@@ -71,6 +75,15 @@ CREATE TABLE gos_gostei (
 );
 ALTER TABLE gos_gostei ADD FOREIGN KEY(usu_id) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
 ALTER TABLE gos_gostei ADD FOREIGN KEY(pos_id) REFERENCES pos_postagem(pos_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+CREATE TABLE seg_seguir (
+	seg_id BIGSERIAL PRIMARY KEY,
+	seg_seguidor BIGINT not null,
+	seg_seguindo BIGINT not null,
+	seg_valor smallint defalut 1
+);
+ALTER TABLE seg_seguir ADD FOREIGN KEY(seg_seguidor) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
+ALTER TABLE seg_seguir ADD FOREIGN KEY(seg_seguindo) REFERENCES usu_usuario(usu_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 INSERT INTO cat_categoria VALUES(0,'Jogos'),(1,'Quadrinhos'),(2,'ilustração'),(3,'Animações'),(4,'Musica/Audio'),(5,'WebFiction'),(6,'Software');
 
